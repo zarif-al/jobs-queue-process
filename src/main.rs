@@ -69,7 +69,7 @@ async fn main() {
                             }
                             None => {
                                 println!("Processor Thread => No jobs in queue. Going to sleep!\n");
-                                sleep(Duration::from_secs(5)).await;
+                                sleep(Duration::from_secs(60)).await;
                                 continue;
                             }
                         }
@@ -83,7 +83,7 @@ async fn main() {
                 println!(
                     "Processor Thread => Less than 60 seconds between requests. Going to sleep!\n"
                 );
-                sleep(Duration::from_secs(5)).await;
+                sleep(Duration::from_secs(60)).await;
             }
         }
     });
