@@ -13,10 +13,10 @@ There is another [project](https://github.com/lemon-hive/sanity-custom-sync) tha
 This implementation uses a local queue to store and execute jobs.
 
 We have the following variables:
-- jobs: VecDeque
-- last_req_time: Instant
+- jobs: `VecDeque`
+- last_req_time: `Instant`
 
-Both these are Arc<Mutex> types.
+Both these are `Arc<Mutex>` types.
 
 When the application starts we have our app running in the main thread listening for requests, and we have a separate thread (`Processor Thread`) that checks the `jobs` queue for jobs.
 
