@@ -15,7 +15,9 @@ This implementation uses a Redis database to store and execute jobs.
 We will look at the following redis-queue crates:
 
 - [redis_work_queue](https://docs.rs/redis-work-queue/latest/redis_work_queue/)
-- [rsmq_async](https://docs.rs/rsmq_async/6.0.0/rsmq_async/)
+- [apalis](https://crates.io/crates/apalis)
+- [sidekiq](https://crates.io/crates/sidekiq)
+- [celery](https://crates.io/crates/celery)
 
 When the application starts we have our app running in the main thread listening for requests, and we have a separate thread (`Processor Thread`) that checks the `jobs` queue for jobs.
 
