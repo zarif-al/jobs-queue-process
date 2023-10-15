@@ -8,3 +8,7 @@ The goal of this application is to create a multithreaded solution to queue jobs
 
 There is another [project](https://github.com/lemon-hive/sanity-custom-sync) that implements a similar solution using NestJS. We will consider that as the benchmark.
 
+### Current Implementation
+
+This implementation uses a local queue to store and execute jobs.
+
