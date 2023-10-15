@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 axum = "0.6.20"
+redis-work-queue = "0.1.6"
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.33.0", features = ["full"] }
