@@ -40,6 +40,10 @@ async fn main() {
         loop {
             let time;
             {
+                /*
+                   We want to drop the lock on `last_req_time` mutex as soon
+                   as possible to we are calling it in an inner scope.
+                */
                 println!("Processor Thread => Waiting for time lock...");
                 let last_req_time = last_req_time.lock().await;
                 println!("Processor Thread => Got time lock.\n");

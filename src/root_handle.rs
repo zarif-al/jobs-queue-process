@@ -25,6 +25,10 @@ pub async fn handle(
 ) -> (StatusCode, Json<Response>) {
     tokio::spawn(async move {
         {
+            /*
+               We want to drop the lock on `last_req_time` mutex as soon
+               as possible to we are calling it in an inner scope.
+            */
             println!("\nRoute Thread => Waiting for time lock...");
             let mut last_req_time = last_req_time.lock().await;
             println!("Route Thread => Got time lock.\n");
