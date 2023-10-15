@@ -8,7 +8,8 @@ The goal of this application is to create a multithreaded solution to queue jobs
 
 There is another [project](https://github.com/lemon-hive/sanity-custom-sync) that implements a similar solution using NestJS. We will consider that as the benchmark.
 
-### **Current Implementation**
+### Current Implementation
+> This will be the base branch for Redis implementations.
 
 This implementation uses a Redis database to store and execute jobs.
 
