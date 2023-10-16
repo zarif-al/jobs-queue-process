@@ -1,8 +1,9 @@
 use std::time::Duration;
 
+use redis::aio::Connection;
 use tokio::time::sleep;
 
-pub async fn redis_conn_check(redis_url: &str) -> bool {
+pub async fn redis_conn_check(redis_url: &str) -> Option<Connection> {
     // check if we can connect to db.
     const RETRY_COUNT: i32 = 10;
     const RETRY_DELAY: Duration = Duration::from_secs(10);
@@ -15,10 +16,12 @@ pub async fn redis_conn_check(redis_url: &str) -> bool {
 
         match client {
             Ok(client) => {
-                let db = client.get_async_connection().await;
-                match db {
-                    Ok(_) => {
-                        break;
+                /*
+                   try to get a connection
+                */
+                match client.get_async_connection().await {
+                    Ok(conn) => {
+                        return Some(conn);
                     }
                     Err(_) => {
                         println!(
@@ -43,9 +46,5 @@ pub async fn redis_conn_check(redis_url: &str) -> bool {
         // let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
     }
 
-    if retries == RETRY_COUNT {
-        return false;
-    } else {
-        return true;
-    }
+    return None;
 }
