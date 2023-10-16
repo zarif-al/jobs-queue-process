@@ -36,6 +36,8 @@ pub async fn queue_thread(name: String, mut rx: Receiver<String>) {
 
     let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
 
+    println!("{name} => Ready to receive jobs!");
+
     loop {
         for received in rx.recv().await.iter() {
             let job = Item::from_string_data(String::from(received));
@@ -51,7 +53,7 @@ pub async fn queue_thread(name: String, mut rx: Receiver<String>) {
 }
 
 pub async fn processing_thread(name: String) {
-    const PROCESSING_TIME: Duration = Duration::from_secs(30 * 10);
+    const PROCESSING_TIME: Duration = Duration::from_secs(10);
 
     // connect to redis
     let host = "localhost";
@@ -63,6 +65,8 @@ pub async fn processing_thread(name: String) {
 
     // get work queue
     let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
+
+    println!("{name} => Ready to process jobs!");
 
     loop {
         let job: Option<Item> = work_queue
