@@ -1,0 +1,18 @@
+version: "3"
+services:
+  rust-app:
+    build:
+      context: . # Use the current directory as the build context
+      dockerfile: Dockerfile # Specify the Dockerfile
+    container_name: my-rust-app
+    ports:
+      - "4000:4000" # Adjust the port as needed
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - "6379:6379" # Expose the default Redis port
