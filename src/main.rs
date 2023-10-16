@@ -123,6 +123,79 @@ async fn main() {
             }
         }
     });
+
+    // thread to process jobs from queue
+    tokio::spawn(async {
+        // connect to redis
+        let host = "localhost";
+        let db = &mut redis::Client::open(format!("redis://{host}/"))
+            .expect("Expected: Rust db")
+            .get_async_connection()
+            .await
+            .expect("Expected: Async connection to Rust db");
+
+        let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
+
+        loop {
+            let job: Option<Item> = work_queue
+                .lease(db, None, Duration::from_secs(60))
+                .await
+                .expect("Expected: Lease a job");
+
+            match job {
+                Some(job) => {
+                    println!("Processing Thread 3 => Processing Job: {}", job.id);
+                    sleep(PROCESSING_TIME).await;
+                    work_queue
+                        .complete(db, &job)
+                        .await
+                        .expect("Expected: Mark job as complete from processing thread 3.");
+                    println!(
+                        "Processing Thread 3 => Completed Processing Job: {}",
+                        job.id
+                    );
+                }
+                None => {}
+            }
+        }
+    });
+
+    // thread to process jobs from queue
+    tokio::spawn(async {
+        // connect to redis
+        let host = "localhost";
+        let db = &mut redis::Client::open(format!("redis://{host}/"))
+            .expect("Expected: Rust db")
+            .get_async_connection()
+            .await
+            .expect("Expected: Async connection to Rust db");
+
+        let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
+
+        loop {
+            let job: Option<Item> = work_queue
+                .lease(db, None, Duration::from_secs(60))
+                .await
+                .expect("Expected: Lease a job");
+
+            match job {
+                Some(job) => {
+                    println!("Processing Thread 3 => Processing Job: {}", job.id);
+                    sleep(PROCESSING_TIME).await;
+                    work_queue
+                        .complete(db, &job)
+                        .await
+                        .expect("Expected: Mark job as complete from processing thread 3.");
+                    println!(
+                        "Processing Thread 3 => Completed Processing Job: {}",
+                        job.id
+                    );
+                }
+                None => {}
+            }
+        }
+    });
+
     // run it with hyper on localhost:4000
     axum::Server::bind(&"0.0.0.0:4000".parse().unwrap())
         .serve(app.into_make_service())
