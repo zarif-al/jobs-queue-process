@@ -1,8 +1,8 @@
-use std::time::Duration;
-
 use axum::{http::StatusCode, Json};
+use redis::aio::Connection;
 use redis_work_queue::{Item, KeyPrefix, WorkQueue};
 use serde::Serialize;
+use std::time::Duration;
 use tokio::{
     sync::mpsc::{Receiver, Sender},
     time::sleep,
@@ -26,16 +26,12 @@ pub async fn handle(tx: Sender<String>) -> (StatusCode, Json<Response>) {
     )
 }
 
-pub async fn queue_thread(name: String, mut rx: Receiver<String>) {
-    let host = "localhost";
-    let db = &mut redis::Client::open(format!("redis://{host}/"))
-        .expect("Expected: Rust db")
-        .get_async_connection()
-        .await
-        .expect("Expected: Async connection to Rust db");
-
-    let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
-
+pub async fn queue_thread(
+    name: String,
+    mut rx: Receiver<String>,
+    mut redis_conn: Connection,
+    work_queue: WorkQueue,
+) {
     println!("{name} => Ready to receive jobs!");
 
     loop {
@@ -43,16 +39,16 @@ pub async fn queue_thread(name: String, mut rx: Receiver<String>) {
             let job = Item::from_string_data(String::from(received));
 
             work_queue
-                .add_item(db, &job)
+                .add_item(&mut redis_conn, &job)
                 .await
-                .expect("Expected: Successfull addition of job to queue");
+                .expect("{name} => Failed to add job to queue.");
 
             println!("{name} => Added job to queue. Job ID: {}", job.id);
         }
     }
 }
 
-pub async fn processing_thread(name: String) {
+pub async fn processing_thread(name: String, mut redis_con: Connection) {
     const PROCESSING_TIME: Duration = Duration::from_secs(10);
 
     // connect to redis
