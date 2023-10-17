@@ -1,6 +1,6 @@
 extern crate dotenv;
 
-mod connection_check;
+mod db_connect;
 mod root_route;
 
 use axum::{routing::post, Router};
@@ -8,7 +8,9 @@ use dotenv::dotenv;
 use redis_work_queue::{KeyPrefix, WorkQueue};
 use serde::Serialize;
 use std::env;
+use std::sync::Arc;
 use tokio::sync::mpsc;
+
 #[derive(Serialize)]
 pub struct Response {
     message: String,
@@ -16,27 +18,15 @@ pub struct Response {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    // Load env form .env
+    // load env form .env
     dotenv().ok();
 
-    // Check env
-    let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not set in .env");
+    // get redis work queue name
+    let redis_work_queue_name =
+        env::var("REDIS_WORK_QUEUE").expect("REDIS_WORK_QUEUE is not set in .env");
 
-    // Check connections
-    let redis_connected = connection_check::redis_conn_check(&redis_url).await;
-
-    let redis_conn;
-    // let redis_ref;
-    match redis_connected {
-        Some(conn) => {
-            redis_conn = conn;
-            // redis_ref = Arc::new(Mutex::new(conn));
-            println!("DB Connected!");
-        }
-        None => panic!("Could not establish connection to db."),
-    }
-
-    let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
+    // create work queue
+    let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(redis_work_queue_name)));
 
     // transmitters and receivers
     let (tx, rx) = mpsc::channel::<String>(32);
@@ -54,26 +44,28 @@ async fn main() {
     tokio::spawn(root_route::queue_thread(
         String::from("Route Thread 1"),
         rx,
-        redis_conn,
-        work_queue,
+        Arc::clone(&work_queue),
     ));
 
     // threads to process jobs from queue
-    // tokio::spawn(root_route::processing_thread(
-    //     "Processing Thread 1".to_string(),
-    //     redis_conn,
-    // ));
-    // tokio::spawn(root_route::processing_thread(
-    //     "Processing Thread 2".to_string(),
-    //     redis_conn,
-    // ));
-    // tokio::spawn(root_route::processing_thread(
-    //     "Processing Thread 3".to_string(),
-    //     redis_conn,
-    // ));
+    tokio::spawn(root_route::processing_thread(
+        "Processing Thread 1".to_string(),
+        Arc::clone(&work_queue),
+    ));
+    tokio::spawn(root_route::processing_thread(
+        "Processing Thread 2".to_string(),
+        Arc::clone(&work_queue),
+    ));
+    tokio::spawn(root_route::processing_thread(
+        "Processing Thread 3".to_string(),
+        Arc::clone(&work_queue),
+    ));
 
-    // run it with hyper on localhost:4000
-    axum::Server::bind(&"0.0.0.0:4000".parse().unwrap())
+    // get app port
+    let port = env::var("PORT").expect("PORT not set in .evn");
+
+    // serve it with hyper on localhost
+    axum::Server::bind(&format!("0.0.0.0:{port}").parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
