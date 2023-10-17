@@ -22,7 +22,9 @@ pub async fn redis_conn() -> Option<Connection> {
     let mut retries = 0;
 
     while retries != RETRY_COUNT {
-        println!("Connection Attempt: {retries}");
+        if retries > 1 {
+            println!("Connection Attempt: {retries}");
+        }
 
         // try to connect to redis client
         let client = &mut redis::Client::open(format!("redis://{redis_url}/"));
