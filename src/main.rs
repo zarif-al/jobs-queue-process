@@ -31,6 +31,12 @@ async fn main() {
     // transmitters and receivers
     let (tx, rx) = mpsc::channel::<String>(32);
 
+    // We should prevent the app from proceeding until we have a connection. Otherwise
+    // Multiple threads will try to connect to the db at the same time.
+    if db_connect::redis_conn().await.is_none() {
+        panic!("Failed to connect to db");
+    }
+
     // build our application with a single route
     let app = Router::new().route(
         "/",
