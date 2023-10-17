@@ -1,12 +1,13 @@
 use axum::{http::StatusCode, Json};
-use redis::aio::Connection;
-use redis_work_queue::{Item, KeyPrefix, WorkQueue};
+use redis_work_queue::{Item, WorkQueue};
 use serde::Serialize;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::mpsc::{Receiver, Sender},
     time::sleep,
 };
+
+use crate::db_connect;
 
 #[derive(Serialize)]
 pub struct Response {
@@ -16,7 +17,7 @@ pub struct Response {
 pub async fn handle(tx: Sender<String>) -> (StatusCode, Json<Response>) {
     tx.send(String::from("job"))
         .await
-        .expect("Expected: Send job down the channel.");
+        .expect("Failed to send job down the channel");
 
     (
         StatusCode::OK,
@@ -26,61 +27,58 @@ pub async fn handle(tx: Sender<String>) -> (StatusCode, Json<Response>) {
     )
 }
 
-pub async fn queue_thread(
-    name: String,
-    mut rx: Receiver<String>,
-    mut redis_conn: Connection,
-    work_queue: WorkQueue,
-) {
-    println!("{name} => Ready to receive jobs!");
+pub async fn queue_thread(name: String, mut rx: Receiver<String>, work_queue: Arc<WorkQueue>) {
+    match db_connect::redis_conn().await {
+        Some(mut conn) => {
+            println!("{name} => Ready to receive jobs!");
 
-    loop {
-        for received in rx.recv().await.iter() {
-            let job = Item::from_string_data(String::from(received));
+            loop {
+                for received in rx.recv().await.iter() {
+                    let job = Item::from_string_data(String::from(received));
 
-            work_queue
-                .add_item(&mut redis_conn, &job)
-                .await
-                .expect("{name} => Failed to add job to queue.");
+                    work_queue
+                        .add_item(&mut conn, &job)
+                        .await
+                        .expect("{name} => Failed to add job to queue.");
 
-            println!("{name} => Added job to queue. Job ID: {}", job.id);
+                    println!("{name} => Added job to queue. Job ID: {}", job.id);
+                }
+            }
         }
+        None => {}
     }
 }
 
-pub async fn processing_thread(name: String, mut redis_con: Connection) {
+pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
     const PROCESSING_TIME: Duration = Duration::from_secs(10);
 
-    // connect to redis
-    let host = "localhost";
-    let db = &mut redis::Client::open(format!("redis://{host}/"))
-        .expect("Expected: Rust db")
-        .get_async_connection()
-        .await
-        .expect("Expected: Async connection to Rust db");
+    match db_connect::redis_conn().await {
+        Some(mut conn) => {
+            println!("{name} => Ready to process jobs!");
 
-    // get work queue
-    let work_queue = WorkQueue::new(KeyPrefix::from("sanity_custom_sync_rust"));
-
-    println!("{name} => Ready to process jobs!");
-
-    loop {
-        let job: Option<Item> = work_queue
-            .lease(db, None, Duration::from_secs(60))
-            .await
-            .expect("Expected: Lease a job");
-
-        match job {
-            Some(job) => {
-                println!("{name} => Processing Job: {}", job.id);
-                sleep(PROCESSING_TIME).await;
-                work_queue
-                    .complete(db, &job)
+            loop {
+                let job: Option<Item> = work_queue
+                    .lease(&mut conn, None, Duration::from_secs(60))
                     .await
-                    .expect("Expected: Mark job as complete from: processing thread 1");
-                println!("{name} => Completed Processing Job: {}", job.id);
+                    .expect("Failed to lease a job!");
+
+                match job {
+                    Some(job) => {
+                        println!("{name} => Processing Job: {}", job.id);
+
+                        sleep(PROCESSING_TIME).await;
+
+                        work_queue
+                            .complete(&mut conn, &job)
+                            .await
+                            .expect("Failed to mark a job as incomplete!");
+
+                        println!("{name} => Completed Processing Job: {}", job.id);
+                    }
+                    None => {}
+                }
             }
-            None => {}
         }
+        None => {}
     }
 }
