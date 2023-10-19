@@ -79,11 +79,11 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                         };
 
                         match job_data {
-                            RequestPayload::PayloadProductDelete(payload) => {
-                                println!("{} => Delete Job Action: {:?}", name, payload.action);
-                            }
                             RequestPayload::PayloadProductSync(payload) => {
                                 println!("{} => Sync Job Action: {:?}", name, payload.action);
+                            }
+                            RequestPayload::PayloadProductDelete(payload) => {
+                                println!("{} => Delete Job Action: {:?}", name, payload.action);
                             }
                         }
 
