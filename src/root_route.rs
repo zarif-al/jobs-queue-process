@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, Json};
+use axum::{extract::Json, http::StatusCode};
 use redis_work_queue::{Item, WorkQueue};
 use serde::Serialize;
 use std::{sync::Arc, time::Duration};
@@ -7,15 +7,15 @@ use tokio::{
     time::sleep,
 };
 
-use crate::db_connect;
+use crate::{db_connect, Payload};
 
 #[derive(Serialize)]
 pub struct Response {
     message: String,
 }
 
-pub async fn handle(tx: Sender<String>) -> (StatusCode, Json<Response>) {
-    tx.send(String::from("job"))
+pub async fn handle(tx: Sender<Payload>, payload: Payload) -> (StatusCode, Json<Response>) {
+    tx.send(payload)
         .await
         .expect("Failed to send job down the channel");
 
@@ -27,21 +27,21 @@ pub async fn handle(tx: Sender<String>) -> (StatusCode, Json<Response>) {
     )
 }
 
-pub async fn queue_thread(name: String, mut rx: Receiver<String>, work_queue: Arc<WorkQueue>) {
+pub async fn queue_thread(name: String, mut rx: Receiver<Payload>, work_queue: Arc<WorkQueue>) {
     match db_connect::redis_conn().await {
         Some(mut conn) => {
             println!("{name} => Ready to receive jobs!");
 
             loop {
                 for received in rx.recv().await.iter() {
-                    let job = Item::from_string_data(String::from(received));
+                    let job = Item::from_json_data(received).unwrap();
 
                     work_queue
                         .add_item(&mut conn, &job)
                         .await
                         .expect("{name} => Failed to add job to queue.");
 
-                    println!("{name} => Added job to queue. Job ID: {}", job.id);
+                    println!("{name} => Added job to queue. Job ID: {}", job.id,);
                 }
             }
         }
@@ -64,7 +64,11 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                 match job {
                     Some(job) => {
-                        println!("{name} => Processing Job: {}", job.id);
+                        println!(
+                            "{name} => Processing Job: {}, Job Data: {:?}",
+                            job.id,
+                            job.data_json::<Payload>().unwrap().action
+                        );
 
                         sleep(PROCESSING_TIME).await;
 
