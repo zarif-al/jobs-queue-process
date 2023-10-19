@@ -3,17 +3,17 @@ extern crate dotenv;
 mod db_connect;
 mod root_route;
 
-use axum::{routing::post, Router};
+use axum::{extract::Json, routing::post, Router};
 use dotenv::dotenv;
 use redis_work_queue::{KeyPrefix, WorkQueue};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
-#[derive(Serialize)]
-pub struct Response {
-    message: String,
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Payload {
+    action: String,
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
@@ -29,7 +29,7 @@ async fn main() {
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(redis_work_queue_name)));
 
     // transmitters and receivers
-    let (tx, rx) = mpsc::channel::<String>(32);
+    let (tx, rx) = mpsc::channel::<Payload>(32);
 
     // We should prevent the app from proceeding until we have a connection. Otherwise
     // Multiple threads will try to connect to the db at the same time.
@@ -42,7 +42,7 @@ async fn main() {
         "/",
         post({
             let tx_clone = tx.clone();
-            move || root_route::handle(tx_clone)
+            move |Json(payload): Json<Payload>| root_route::handle(tx_clone, payload)
         }),
     );
 
