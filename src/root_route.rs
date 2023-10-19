@@ -1,3 +1,6 @@
+use crate::db_connect;
+use crate::shopify_payload::RequestPayload;
+
 use axum::{extract::Json, http::StatusCode};
 use redis_work_queue::{Item, WorkQueue};
 use serde::Serialize;
@@ -7,14 +10,15 @@ use tokio::{
     time::sleep,
 };
 
-use crate::{db_connect, Payload};
-
 #[derive(Serialize)]
 pub struct Response {
     message: String,
 }
 
-pub async fn handle(tx: Sender<Payload>, payload: Payload) -> (StatusCode, Json<Response>) {
+pub async fn handle(
+    tx: Sender<RequestPayload>,
+    payload: RequestPayload,
+) -> (StatusCode, Json<Response>) {
     tx.send(payload)
         .await
         .expect("Failed to send job down the channel");
@@ -27,7 +31,11 @@ pub async fn handle(tx: Sender<Payload>, payload: Payload) -> (StatusCode, Json<
     )
 }
 
-pub async fn queue_thread(name: String, mut rx: Receiver<Payload>, work_queue: Arc<WorkQueue>) {
+pub async fn queue_thread(
+    name: String,
+    mut rx: Receiver<RequestPayload>,
+    work_queue: Arc<WorkQueue>,
+) {
     match db_connect::redis_conn().await {
         Some(mut conn) => {
             println!("{name} => Ready to receive jobs!");
@@ -64,11 +72,22 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                 match job {
                     Some(job) => {
-                        println!(
-                            "{name} => Processing Job: {}, Job Data: {:?}",
-                            job.id,
-                            job.data_json::<Payload>().unwrap().action
-                        );
+                        println!("{name} => Processing Job: {}", job.id,);
+                        let job_data = match job.data_json::<RequestPayload>() {
+                            Ok(response) => response,
+                            Err(_) => panic!("Could not process!"),
+                        };
+
+                        println!("{} => Job Action: {:?}", name, job_data.action);
+
+                        match job_data.products {
+                            Some(products) => {
+                                for product in products {
+                                    println!("{} => Product Title: {}", name, product.title);
+                                }
+                            }
+                            None => {}
+                        }
 
                         sleep(PROCESSING_TIME).await;
 
