@@ -78,15 +78,13 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                             Err(_) => panic!("Could not process!"),
                         };
 
-                        println!("{} => Job Action: {:?}", name, job_data.action);
-
-                        match job_data.products {
-                            Some(products) => {
-                                for product in products {
-                                    println!("{} => Product Title: {}", name, product.title);
-                                }
+                        match job_data {
+                            RequestPayload::PayloadProductDelete(payload) => {
+                                println!("{} => Delete Job Action: {:?}", name, payload.action);
                             }
-                            None => {}
+                            RequestPayload::PayloadProductSync(payload) => {
+                                println!("{} => Sync Job Action: {:?}", name, payload.action);
+                            }
                         }
 
                         sleep(PROCESSING_TIME).await;
