@@ -30,16 +30,16 @@ pub struct PayloadProductDelete {
     productIds: Vec<i32>,
 }
 
-// TODO: Create a custom deserializer to manange this payload
-// #[derive(Deserialize, Serialize, Debug)]
-// pub enum RequestPayload {
-//     PayloadProductSync(PayloadProductSync),
-//     PayloadProductDelete(PayloadProductDelete),
-// }
-
 #[derive(Deserialize, Serialize, Debug)]
 pub struct RequestPayload {
     pub action: Action,
     pub products: Option<Vec<Product>>,
     pub productIds: Option<Vec<i32>>,
+}
+
+// TODO: Create a custom deserializer to manange this payload
+#[derive(Deserialize, Serialize, Debug)]
+pub enum RequestPayloadEnum {
+    PayloadProductSync(PayloadProductSync),
+    PayloadProductDelete(PayloadProductDelete),
 }
