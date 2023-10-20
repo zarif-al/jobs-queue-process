@@ -3,11 +3,11 @@
 */
 #![allow(non_snake_case)]
 
-pub mod product;
+pub mod product_payload;
 
 use serde::{Deserialize, Serialize};
 
-use product::Product;
+use product_payload::ShopifyProduct;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -21,7 +21,7 @@ pub enum Action {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PayloadProductSync {
     pub action: Action,
-    products: Vec<Product>,
+    products: Vec<ShopifyProduct>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

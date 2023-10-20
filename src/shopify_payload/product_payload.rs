@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ProductImage {
+struct ShopifyProductImage {
     id: String,
     altText: Option<String>,
     height: Option<u32>,
@@ -12,7 +12,7 @@ pub struct ProductImage {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ProductOption {
+struct ShopifyProductOption {
     id: String,
     name: String,
     position: i32,
@@ -20,25 +20,25 @@ pub struct ProductOption {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ProductPriceRange {
+struct ShopifyProductPriceRange {
     minVariantPrice: Option<f64>,
     maxVariantPrice: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct SelectedOptions {
+struct ShopifySelectedOptions {
     name: String,
     value: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ProductReference {
+struct ShopifyProductReference {
     id: String,
-    status: ProductStatus,
+    status: ShopifyProductStatus,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ProductVariant {
+struct ShopifyProductVariant {
     id: String,
     title: String,
     compareAtPrice: Option<f64>,
@@ -55,14 +55,14 @@ pub struct ProductVariant {
     price: String,
     createdAt: String,
     updatedAt: String,
-    image: Option<ProductImage>,
-    product: ProductReference,
-    selectedOptions: Vec<SelectedOptions>,
+    image: Option<ShopifyProductImage>,
+    product: ShopifyProductReference,
+    selectedOptions: Vec<ShopifySelectedOptions>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "lowercase")]
-pub enum ProductStatus {
+enum ShopifyProductStatus {
     Active,
     Archived,
     Draft,
@@ -70,19 +70,19 @@ pub enum ProductStatus {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct Product {
+pub struct ShopifyProduct {
     id: String,
     pub title: String,
-    featuredImage: ProductImage,
+    featuredImage: ShopifyProductImage,
     handle: String,
-    images: Vec<ProductImage>,
-    options: Vec<ProductOption>,
-    priceRange: ProductPriceRange,
+    images: Vec<ShopifyProductImage>,
+    options: Vec<ShopifyProductOption>,
+    priceRange: ShopifyProductPriceRange,
     productType: String,
     tags: Vec<String>,
-    variants: Vec<ProductVariant>,
+    variants: Vec<ShopifyProductVariant>,
     vendor: String,
-    status: ProductStatus,
+    status: ShopifyProductStatus,
     publishedAt: String,
     createdAt: String,
     updatedAt: String,
