@@ -1,4 +1,6 @@
+use dotenv::dotenv;
 use redis::aio::Connection;
+use std::env;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -7,7 +9,13 @@ use tokio::time::sleep;
  TODO: We should look into caching the response of this function when
  we have successfull connection.
 */
-pub async fn redis_conn(redis_url: String) -> Option<Connection> {
+pub async fn redis_conn() -> Option<Connection> {
+    // Load env form .env
+    dotenv().ok();
+
+    // get redis url from env
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not set in .env");
+
     const RETRY_COUNT: i32 = 10;
     const RETRY_DELAY: Duration = Duration::from_secs(10);
 
