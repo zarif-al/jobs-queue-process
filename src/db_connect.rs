@@ -1,8 +1,8 @@
-use dotenv::dotenv;
 use redis::aio::Connection;
-use std::env;
 use std::time::Duration;
 use tokio::time::sleep;
+
+use crate::env_config::get_env_config;
 
 /*
  This function will try to return a redis connection.
@@ -10,11 +10,8 @@ use tokio::time::sleep;
  we have successfull connection.
 */
 pub async fn redis_conn() -> Option<Connection> {
-    // Load env form .env
-    dotenv().ok();
-
-    // get redis url from env
-    let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not set in .env");
+    // get env config
+    let env_config = get_env_config();
 
     const RETRY_COUNT: i32 = 10;
     const RETRY_DELAY: Duration = Duration::from_secs(10);
@@ -27,7 +24,7 @@ pub async fn redis_conn() -> Option<Connection> {
         }
 
         // try to connect to redis client
-        let client = &mut redis::Client::open(format!("redis://{redis_url}/"));
+        let client = &mut redis::Client::open(format!("redis://{}/", env_config.redis_url));
 
         match client {
             Ok(client) => {
