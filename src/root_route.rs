@@ -35,9 +35,8 @@ pub async fn queue_thread(
     name: String,
     mut rx: Receiver<RequestPayload>,
     work_queue: Arc<WorkQueue>,
-    redis_url: String,
 ) {
-    match db_connect::redis_conn(redis_url).await {
+    match db_connect::redis_conn().await {
         Some(mut conn) => {
             println!("{name} => Ready to receive jobs!");
 
@@ -58,10 +57,10 @@ pub async fn queue_thread(
     }
 }
 
-pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>, redis_url: String) {
+pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
     const PROCESSING_TIME: Duration = Duration::from_secs(10);
 
-    match db_connect::redis_conn(redis_url).await {
+    match db_connect::redis_conn().await {
         Some(mut conn) => {
             println!("{name} => Ready to process jobs!");
 
@@ -82,14 +81,6 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>, redis_u
                         match job_data {
                             RequestPayload::PayloadProductSync(payload) => {
                                 println!("{} => Sync Job Action: {:?}", name, payload.action);
-
-                                // Sanity Push
-                                for product in payload.products {
-                                    let client = reqwest::Client::new();
-
-                                    // client.post("https://5yhk3td3.api.sanity.io/v2021-06-07/data/mutate/production")
-                                }
-                                //
                             }
                             RequestPayload::PayloadProductDelete(payload) => {
                                 println!("{} => Delete Job Action: {:?}", name, payload.action);
