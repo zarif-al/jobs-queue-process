@@ -1,28 +1,26 @@
 extern crate dotenv;
 
+mod client;
 mod db_connect;
+mod env_config;
 mod root_route;
+mod sanity;
 mod shopify_payload;
 
 use axum::{extract::Json, routing::post, Router};
-use dotenv::dotenv;
+use env_config::get_env_config;
 use redis_work_queue::{KeyPrefix, WorkQueue};
 use shopify_payload::RequestPayload;
-use std::env;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    // load env form .env
-    dotenv().ok();
-
-    // get redis work queue name
-    let redis_work_queue_name =
-        env::var("REDIS_WORK_QUEUE").expect("REDIS_WORK_QUEUE is not set in .env");
+    // get env config
+    let env_config = get_env_config();
 
     // create work queue
-    let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(redis_work_queue_name)));
+    let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
 
     // transmitters and receivers
     let (tx, rx) = mpsc::channel::<RequestPayload>(32);
@@ -63,11 +61,8 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
-    // get app port
-    let port = env::var("PORT").expect("PORT not set in .evn");
-
     // serve it with hyper on localhost
-    axum::Server::bind(&format!("0.0.0.0:{port}").parse().unwrap())
+    axum::Server::bind(&format!("0.0.0.0:{}", env_config.port).parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
