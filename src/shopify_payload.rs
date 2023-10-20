@@ -21,7 +21,7 @@ pub enum Action {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PayloadProductSync {
     pub action: Action,
-    products: Vec<ShopifyProduct>,
+    pub products: Vec<ShopifyProduct>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
