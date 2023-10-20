@@ -1,5 +1,3 @@
-extern crate dotenv;
-
 mod client;
 mod db_connect;
 mod env_config;
