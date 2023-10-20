@@ -71,7 +71,7 @@ enum ShopifyProductStatus {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ShopifyProduct {
-    id: String,
+    pub id: String,
     pub title: String,
     featuredImage: ShopifyProductImage,
     handle: String,
