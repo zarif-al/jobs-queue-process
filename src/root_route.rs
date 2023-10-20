@@ -1,14 +1,17 @@
-use crate::db_connect;
+// TODO: Clean up overall code. Look up how to clean up `match` usage
+
+use crate::env_config::get_env_config;
+use crate::sanity::product_schema::SanityProduct;
+use crate::sanity::utils::{get_url, ApiMode};
+use crate::sanity::{Mutations, SanityMutationPayload, SanityResponse};
 use crate::shopify_payload::RequestPayload;
+use crate::{client::get_client, db_connect};
 
 use axum::{extract::Json, http::StatusCode};
 use redis_work_queue::{Item, WorkQueue};
 use serde::Serialize;
 use std::{sync::Arc, time::Duration};
-use tokio::{
-    sync::mpsc::{Receiver, Sender},
-    time::sleep,
-};
+use tokio::sync::mpsc::{Receiver, Sender};
 
 #[derive(Serialize)]
 pub struct Response {
@@ -58,7 +61,10 @@ pub async fn queue_thread(
 }
 
 pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
-    const PROCESSING_TIME: Duration = Duration::from_secs(10);
+    let env_config = get_env_config();
+    let mut mutation_payload: SanityMutationPayload = SanityMutationPayload {
+        mutations: Vec::new(),
+    };
 
     match db_connect::redis_conn().await {
         Some(mut conn) => {
@@ -81,20 +87,57 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                         match job_data {
                             RequestPayload::PayloadProductSync(payload) => {
                                 println!("{} => Sync Job Action: {:?}", name, payload.action);
+
+                                for product in payload.products {
+                                    mutation_payload.mutations.push(Mutations::CreateOrReplace(
+                                        SanityProduct {
+                                            title: product.title,
+                                            _type: "shopifyProduct".to_string(),
+                                            shopify_id: product.id,
+                                        },
+                                    ))
+                                }
                             }
                             RequestPayload::PayloadProductDelete(payload) => {
                                 println!("{} => Delete Job Action: {:?}", name, payload.action);
                             }
                         }
 
-                        sleep(PROCESSING_TIME).await;
+                        let client = get_client();
 
-                        work_queue
-                            .complete(&mut conn, &job)
-                            .await
-                            .expect("Failed to mark a job as incomplete!");
+                        let response = client
+                            .post(get_url(ApiMode::Mutate))
+                            .bearer_auth(&env_config.sanity_auth_token)
+                            .json(&mutation_payload)
+                            .send()
+                            .await;
 
-                        println!("{name} => Completed Processing Job: {}", job.id);
+                        // TODO: Update error handle
+                        match response {
+                            Ok(resp) => {
+                                if resp.status() != 200 {
+                                    let res = resp.json::<SanityResponse>().await.unwrap();
+
+                                    println!(
+                                        "{name} => Failed to complete Processing Job: {}",
+                                        job.id
+                                    );
+
+                                    println!("{name} => Error Message: {:?}", res.error);
+                                } else {
+                                    work_queue
+                                        .complete(&mut conn, &job)
+                                        .await
+                                        .expect("Failed to mark a job as incomplete!");
+
+                                    println!("{name} => Completed Processing Job: {}", job.id);
+                                }
+                            }
+                            Err(err) => {
+                                println!("{name} => Failed to complete Processing Job: {}", job.id);
+                                println!("{name} => Error Message: {}", err)
+                            }
+                        }
                     }
                     None => {}
                 }
