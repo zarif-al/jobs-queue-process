@@ -73,13 +73,18 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
             loop {
                 let job: Option<Item> = work_queue
-                    .lease(&mut conn, None, Duration::from_secs(60))
+                    .lease(
+                        &mut conn,
+                        Some(Duration::from_secs(5)),
+                        Duration::from_secs(60),
+                    )
                     .await
                     .expect("Failed to lease a job!");
 
                 match job {
                     Some(job) => {
                         info!("{} => Processing Job: {}", name, job.id,);
+
                         let job_data = match job.data_json::<RequestPayload>() {
                             Ok(response) => response,
                             Err(_) => panic!("Could not process!"),
@@ -115,17 +120,8 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                         // TODO: Update error handle
                         match response {
-                            Ok(resp) => {
-                                if resp.status() != 200 {
-                                    let res = resp.json::<SanityResponse>().await.unwrap();
-
-                                    error!(
-                                        "{} => Failed to complete Processing Job: {}",
-                                        name, job.id
-                                    );
-
-                                    error!("{} => Error Message: {:?}", name, res.error.unwrap());
-                                } else {
+                            Ok(resp) => match resp.error_for_status_ref() {
+                                Ok(_) => {
                                     work_queue
                                         .complete(&mut conn, &job)
                                         .await
@@ -133,14 +129,23 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                                     info!("{} => Completed Processing Job: {}", name, job.id);
                                 }
-                            }
+                                Err(err) => {
+                                    let res = resp.json::<SanityResponse>().await.unwrap();
+
+                                    error!("{} => Failed to process job: {}, Error Message: {}, Error Body: {:?}", name, job.id, err.without_url(), res.error.unwrap());
+                                }
+                            },
                             Err(err) => {
-                                error!("{name} => Failed to complete Processing Job: {}", job.id);
-                                error!("{name} => Error Message: {}", err)
+                                error!("{} =>  Failed to complete Processing Job: {}, Error Message: {}",name,job.id, err)
                             }
                         }
                     }
-                    None => {}
+                    None => {
+                        // No jobs have been found.
+                        // We will continue looking for jobs.
+                        info!("{} => No Jobs Found!, Continuing...", name);
+                        continue;
+                    }
                 }
             }
         }
