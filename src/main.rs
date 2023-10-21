@@ -48,7 +48,7 @@ async fn main() {
 
     // thread to listen and add jobs to queue
     tokio::spawn(root_route::queue_thread(
-        String::from("Route Thread 1"),
+        String::from("Route: '/' Thread"),
         rx,
         Arc::clone(&work_queue),
     ));
