@@ -9,7 +9,7 @@ use axum::{extract::Json, routing::post, Router};
 use env_config::get_env_config;
 use redis_work_queue::{KeyPrefix, WorkQueue};
 use shopify_payload::RequestPayload;
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::{error, info};
 use tracing_subscriber;
@@ -67,8 +67,11 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
+    let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
+
+    info!("App server listening on port: {}", env_config.port);
     // serve it with hyper on localhost
-    axum::Server::bind(&format!("0.0.0.0:{}", env_config.port).parse().unwrap())
+    axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .expect("App failed to startup!");
