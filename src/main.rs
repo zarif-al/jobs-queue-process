@@ -8,6 +8,7 @@ mod shopify_payload;
 use axum::{routing::post, Json, Router};
 use serde::Serialize;
 use shopify_payload::RequestPayload;
+use std::net::SocketAddr;
 use tracing::info;
 use tracing_subscriber;
 
@@ -30,9 +31,11 @@ async fn main() {
         post(move |Json(payload): Json<RequestPayload>| root_route::handle(payload)),
     );
 
+    let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
+    info!("App listening on {}", addr);
     // serve it with hyper on designated port
-    axum::Server::bind(&format!("0.0.0.0:{}", env_config.port).parse().unwrap())
+    axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
-        .unwrap();
+        .expect("App failed to startup!");
 }
