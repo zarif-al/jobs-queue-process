@@ -1,3 +1,4 @@
+mod client;
 mod root_handle;
 
 use axum::{routing::post, Router};
