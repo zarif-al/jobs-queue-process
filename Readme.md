@@ -17,9 +17,14 @@ We will look at the following redis-queue crates:
 
 - [redis_work_queue](https://docs.rs/redis-work-queue/latest/redis_work_queue/)
   > This project is still in-progress. It does not re-start work that has not been complete. Will need keep an eye on this.
+  > We can have a work-around by marking a job as complete and pushing it to the work queue again.
+  > However, this will not work when the app is restarted.
 - [apalis](https://crates.io/crates/apalis)
+  > The documentation is old.
 - [sidekiq](https://crates.io/crates/sidekiq)
+  > The documentation is old.
 - [celery](https://crates.io/crates/celery)
+  > The documentation is too verbose
 
 When the application starts we have our app running in the main thread listening for requests, and we have a separate thread (`Processor Thread`) that checks the `jobs` queue for jobs.
 
