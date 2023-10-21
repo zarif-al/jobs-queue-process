@@ -1,6 +1,7 @@
 use redis::aio::Connection;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::{info, warn};
 
 use crate::env_config::get_env_config;
 
@@ -20,7 +21,7 @@ pub async fn redis_conn() -> Option<Connection> {
 
     while retries != RETRY_COUNT {
         if retries > 1 {
-            println!("Connection Attempt: {retries}");
+            info!("Connection Attempt: {retries}");
         }
 
         // try to connect to redis client
@@ -34,7 +35,7 @@ pub async fn redis_conn() -> Option<Connection> {
                         return Some(conn);
                     }
                     Err(_) => {
-                        println!(
+                        warn!(
                             "App => Failed to get async connection to db. Sleeping for {} seconds.",
                             RETRY_DELAY.as_secs()
                         );
@@ -44,7 +45,7 @@ pub async fn redis_conn() -> Option<Connection> {
                 }
             }
             Err(_) => {
-                println!(
+                warn!(
                     "App => Failed to get redis client. Sleeping for {} seconds.",
                     RETRY_DELAY.as_secs()
                 );

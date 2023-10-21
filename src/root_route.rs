@@ -12,6 +12,7 @@ use redis_work_queue::{Item, WorkQueue};
 use serde::Serialize;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{error, info};
 
 #[derive(Serialize)]
 pub struct Response {
@@ -41,7 +42,7 @@ pub async fn queue_thread(
 ) {
     match db_connect::redis_conn().await {
         Some(mut conn) => {
-            println!("{name} => Ready to receive jobs!");
+            info!("{} => Ready to receive jobs!", name);
 
             loop {
                 for received in rx.recv().await.iter() {
@@ -52,7 +53,7 @@ pub async fn queue_thread(
                         .await
                         .expect("{name} => Failed to add job to queue.");
 
-                    println!("{name} => Added job to queue. Job ID: {}", job.id,);
+                    info!("{name} => Added job to queue. Job ID: {}", job.id,);
                 }
             }
         }
@@ -68,7 +69,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
     match db_connect::redis_conn().await {
         Some(mut conn) => {
-            println!("{name} => Ready to process jobs!");
+            info!("{} => Ready to process jobs!", name);
 
             loop {
                 let job: Option<Item> = work_queue
@@ -78,7 +79,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                 match job {
                     Some(job) => {
-                        println!("{name} => Processing Job: {}", job.id,);
+                        info!("{} => Processing Job: {}", name, job.id,);
                         let job_data = match job.data_json::<RequestPayload>() {
                             Ok(response) => response,
                             Err(_) => panic!("Could not process!"),
@@ -86,7 +87,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                         match job_data {
                             RequestPayload::PayloadProductSync(payload) => {
-                                println!("{} => Sync Job Action: {:?}", name, payload.action);
+                                info!("{} => Sync Job Action: {:?}", name, payload.action);
 
                                 for product in payload.products {
                                     mutation_payload.mutations.push(Mutations::CreateOrReplace(
@@ -99,7 +100,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                 }
                             }
                             RequestPayload::PayloadProductDelete(payload) => {
-                                println!("{} => Delete Job Action: {:?}", name, payload.action);
+                                info!("{} => Delete Job Action: {:?}", name, payload.action);
                             }
                         }
 
@@ -118,24 +119,24 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                 if resp.status() != 200 {
                                     let res = resp.json::<SanityResponse>().await.unwrap();
 
-                                    println!(
-                                        "{name} => Failed to complete Processing Job: {}",
-                                        job.id
+                                    error!(
+                                        "{} => Failed to complete Processing Job: {}",
+                                        name, job.id
                                     );
 
-                                    println!("{name} => Error Message: {:?}", res.error.unwrap());
+                                    error!("{} => Error Message: {:?}", name, res.error.unwrap());
                                 } else {
                                     work_queue
                                         .complete(&mut conn, &job)
                                         .await
                                         .expect("Failed to mark a job as incomplete!");
 
-                                    println!("{name} => Completed Processing Job: {}", job.id);
+                                    info!("{} => Completed Processing Job: {}", name, job.id);
                                 }
                             }
                             Err(err) => {
-                                println!("{name} => Failed to complete Processing Job: {}", job.id);
-                                println!("{name} => Error Message: {}", err)
+                                error!("{name} => Failed to complete Processing Job: {}", job.id);
+                                error!("{name} => Error Message: {}", err)
                             }
                         }
                     }

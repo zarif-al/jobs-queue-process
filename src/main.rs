@@ -11,9 +11,14 @@ use redis_work_queue::{KeyPrefix, WorkQueue};
 use shopify_payload::RequestPayload;
 use std::sync::Arc;
 use tokio::sync::mpsc;
+use tracing::{error, info};
+use tracing_subscriber;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
+    // install global collector configured based on RUST_LOG env var.
+    tracing_subscriber::fmt::init();
+
     // get env config
     let env_config = get_env_config();
 
@@ -26,8 +31,11 @@ async fn main() {
     // We should prevent the app from proceeding until we have a connection. Otherwise
     // Multiple threads will try to connect to the db at the same time.
     if db_connect::redis_conn().await.is_none() {
+        error!("Redis connection failed");
         panic!("Failed to connect to db");
     }
+
+    info!("Redis Connection successfull");
 
     // build our application with a single route
     let app = Router::new().route(
