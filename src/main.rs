@@ -71,5 +71,5 @@ async fn main() {
     axum::Server::bind(&format!("0.0.0.0:{}", env_config.port).parse().unwrap())
         .serve(app.into_make_service())
         .await
-        .unwrap();
+        .expect("App failed to startup!");
 }

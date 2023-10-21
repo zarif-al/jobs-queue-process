@@ -5,7 +5,7 @@ use dotenv::dotenv;
 pub struct EnvConfig {
     pub redis_url: String,
     pub redis_work_queue: String,
-    pub port: String,
+    pub port: u16,
     pub sanity_project_id: String,
     pub sanity_auth_token: String,
     pub sanity_dataset: String,
@@ -31,7 +31,9 @@ pub fn get_env_config() -> EnvConfig {
     let sanity_dataset = env::var("SANITY_DATASET").expect("SANITY_DATASET not defined in .env");
 
     EnvConfig {
-        port,
+        port: port
+            .parse::<u16>()
+            .expect("PORT should be parseable as a u16."),
         redis_url,
         redis_work_queue,
         sanity_auth_token,
