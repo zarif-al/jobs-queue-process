@@ -123,7 +123,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                         job.id
                                     );
 
-                                    println!("{name} => Error Message: {:?}", res.error);
+                                    println!("{name} => Error Message: {:?}", res.error.unwrap());
                                 } else {
                                     work_queue
                                         .complete(&mut conn, &job)
