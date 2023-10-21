@@ -3,6 +3,7 @@ mod db_connect;
 mod env_config;
 mod root_route;
 mod sanity;
+mod shopify_payload;
 
 use axum::{routing::post, Router};
 use serde::Serialize;
