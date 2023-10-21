@@ -2,6 +2,7 @@ mod client;
 mod db_connect;
 mod env_config;
 mod root_route;
+mod sanity;
 
 use axum::{routing::post, Router};
 use serde::Serialize;
