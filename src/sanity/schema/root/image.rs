@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
-use crate::sanity::root::SanityReference;
 use serde::Serialize;
+
+use crate::sanity::base::reference::SanityReference;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct SanityImage {

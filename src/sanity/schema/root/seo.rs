@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use crate::sanity::root::image::SanityCustomImage;
+use crate::sanity::schema::root::image::SanityCustomImage;
 
 use super::link::SanityLink;
 
