@@ -3,66 +3,66 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifyProductImage {
-    id: String,
-    altText: Option<String>,
-    height: Option<u32>,
-    width: Option<u32>,
-    src: String,
+pub struct ShopifyProductImage {
+    pub id: String,
+    pub altText: Option<String>,
+    pub height: Option<u32>,
+    pub width: Option<u32>,
+    pub src: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifyProductOption {
-    id: String,
-    name: String,
-    position: i32,
-    values: Vec<String>,
+pub struct ShopifyProductOption {
+    pub id: String,
+    pub name: String,
+    pub position: i32,
+    pub values: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifyProductPriceRange {
-    minVariantPrice: Option<f64>,
-    maxVariantPrice: Option<f64>,
+pub struct ShopifyProductPriceRange {
+    pub minVariantPrice: Option<f64>,
+    pub maxVariantPrice: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifySelectedOptions {
-    name: String,
-    value: String,
+pub struct ShopifySelectedOptions {
+    pub name: String,
+    pub value: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifyProductReference {
-    id: String,
-    status: ShopifyProductStatus,
+pub struct ShopifyProductReference {
+    pub id: String,
+    pub status: ShopifyProductStatus,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ShopifyProductVariant {
-    id: String,
-    title: String,
-    compareAtPrice: Option<f64>,
-    barcode: Option<String>,
-    inventoryPolicy: String,
-    inventoryQuantity: i32,
-    inventoryManagement: String,
-    position: i32,
-    requiresShipping: bool,
-    sku: String,
-    taxable: bool,
-    weight: f64,
-    weightUnit: String,
-    price: String,
-    createdAt: String,
-    updatedAt: String,
-    image: Option<ShopifyProductImage>,
-    product: ShopifyProductReference,
-    selectedOptions: Vec<ShopifySelectedOptions>,
+pub struct ShopifyProductVariant {
+    pub id: String,
+    pub title: String,
+    pub compareAtPrice: Option<f64>,
+    pub barcode: Option<String>,
+    pub inventoryPolicy: String,
+    pub inventoryQuantity: i32,
+    pub inventoryManagement: String,
+    pub position: i32,
+    pub requiresShipping: bool,
+    pub sku: String,
+    pub taxable: bool,
+    pub weight: f64,
+    pub weightUnit: String,
+    pub price: String,
+    pub createdAt: String,
+    pub updatedAt: String,
+    pub image: Option<ShopifyProductImage>,
+    pub product: ShopifyProductReference,
+    pub selectedOptions: Vec<ShopifySelectedOptions>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "lowercase")]
-enum ShopifyProductStatus {
+pub enum ShopifyProductStatus {
     Active,
     Archived,
     Draft,
@@ -73,17 +73,17 @@ enum ShopifyProductStatus {
 pub struct ShopifyProduct {
     pub id: String,
     pub title: String,
-    featuredImage: ShopifyProductImage,
-    handle: String,
-    images: Vec<ShopifyProductImage>,
-    options: Vec<ShopifyProductOption>,
-    priceRange: ShopifyProductPriceRange,
-    productType: String,
-    tags: Vec<String>,
-    variants: Vec<ShopifyProductVariant>,
-    vendor: String,
-    status: ShopifyProductStatus,
-    publishedAt: String,
-    createdAt: String,
-    updatedAt: String,
+    pub featuredImage: ShopifyProductImage,
+    pub handle: String,
+    pub images: Vec<ShopifyProductImage>,
+    pub options: Vec<ShopifyProductOption>,
+    pub priceRange: ShopifyProductPriceRange,
+    pub productType: String,
+    pub tags: Vec<String>,
+    pub variants: Vec<ShopifyProductVariant>,
+    pub vendor: String,
+    pub status: ShopifyProductStatus,
+    pub publishedAt: String,
+    pub createdAt: String,
+    pub updatedAt: String,
 }
