@@ -3,7 +3,7 @@
 use serde::Serialize;
 
 use crate::{
-    sanity::{root::image::SanityCustomImage, root::seo::SanitySEO},
+    sanity::schema::{root::image::SanityCustomImage, root::seo::SanitySEO},
     shopify_payload::product_payload::ShopifyProductStatus,
 };
 
