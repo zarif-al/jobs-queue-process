@@ -159,6 +159,12 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                             RequestPayload::PayloadProductDelete(payload) => {
                                 info!("{} => Delete Job Action: {:?}", name, payload.action);
                             }
+                            RequestPayload::PayloadCollectionsSync(payload) => {
+                                todo!()
+                            }
+                            RequestPayload::PayloadCollectionsDelete(payload) => {
+                                todo!()
+                            }
                         }
 
                         let client = get_http_client(ContenType::Data);
