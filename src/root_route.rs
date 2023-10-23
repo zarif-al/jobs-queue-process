@@ -35,10 +35,9 @@ pub async fn handle(
     tx: Sender<RequestPayload>,
     payload: RequestPayload,
 ) -> (StatusCode, Json<Response>) {
-    // tx.send(payload)
-    //     .await
-    //     .expect("Failed to send job down the channel");
-    info!("Received request");
+    tx.send(payload)
+        .await
+        .expect("Failed to send job down the channel");
 
     (
         StatusCode::OK,
