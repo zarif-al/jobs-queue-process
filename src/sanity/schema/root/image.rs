@@ -14,4 +14,7 @@ pub struct SanityImage {
 pub struct SanityCustomImage {
     pub alt: Option<String>,
     pub imageSrc: SanityImage,
+    // This is only needed if the image is being stored
+    // in a vector
+    pub _key: Option<String>,
 }
