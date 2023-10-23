@@ -3,10 +3,12 @@
 */
 #![allow(non_snake_case)]
 
+pub mod collection;
 pub mod product;
 
 use serde::{Deserialize, Serialize};
 
+use collection::ShopifyCollection;
 use product::ShopifyProduct;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -27,7 +29,19 @@ pub struct PayloadProductSync {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PayloadProductDelete {
     pub action: Action,
-    productIds: Vec<i32>,
+    pub productIds: Vec<i32>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PayloadCollectionsSync {
+    pub action: Action,
+    pub collections: Vec<ShopifyCollection>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PayloadCollectionsDelete {
+    pub action: Action,
+    pub collectionIds: Vec<i32>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -35,4 +49,6 @@ pub struct PayloadProductDelete {
 pub enum RequestPayload {
     PayloadProductSync(PayloadProductSync),
     PayloadProductDelete(PayloadProductDelete),
+    PayloadCollectionsSync(PayloadCollectionsSync),
+    PayloadCollectionsDelete(PayloadCollectionsDelete),
 }
