@@ -1,6 +1,6 @@
-mod client;
 mod db_connect;
 mod env_config;
+mod http_client;
 mod root_route;
 mod sanity;
 mod shopify_payload;
@@ -20,6 +20,7 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     // get env config
+    // this call will panic the app if any env is not found
     let env_config = get_env_config();
 
     // create work queue
@@ -70,6 +71,7 @@ async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
 
     info!("App server listening on port: {}", env_config.port);
+
     // serve it with hyper on localhost
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
