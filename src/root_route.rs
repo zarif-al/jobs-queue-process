@@ -11,7 +11,7 @@ use crate::sanity::schema::{
     root::link::SanityLink,
     root::seo::{SanitySEO, SanitySeoOpenGraph, SanitySlug},
 };
-use crate::shopify_payload::product_payload::ShopifyProductImage;
+use crate::shopify_payload::product::ShopifyProductImage;
 use crate::shopify_payload::RequestPayload;
 use crate::{
     db_connect,
@@ -35,9 +35,10 @@ pub async fn handle(
     tx: Sender<RequestPayload>,
     payload: RequestPayload,
 ) -> (StatusCode, Json<Response>) {
-    tx.send(payload)
-        .await
-        .expect("Failed to send job down the channel");
+    // tx.send(payload)
+    //     .await
+    //     .expect("Failed to send job down the channel");
+    info!("Received request");
 
     (
         StatusCode::OK,

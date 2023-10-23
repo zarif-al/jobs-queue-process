@@ -3,11 +3,11 @@
 */
 #![allow(non_snake_case)]
 
-pub mod product_payload;
+pub mod product;
 
 use serde::{Deserialize, Serialize};
 
-use product_payload::ShopifyProduct;
+use product::ShopifyProduct;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "lowercase")]

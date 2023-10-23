@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use crate::{
     sanity::schema::{root::image::SanityCustomImage, root::seo::SanitySEO},
-    shopify_payload::product_payload::ShopifyProductStatus,
+    shopify_payload::product::ShopifyProductStatus,
 };
 
 #[derive(Serialize, Debug)]
