@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 // TODO: Update Sanity Response Handle
 #[derive(Deserialize, Debug)]
