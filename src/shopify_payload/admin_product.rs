@@ -15,3 +15,8 @@ pub struct ProductTaxonomyNode {
     pub id: String,
     pub name: String,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct GraphQLShopifyProductQueryResponse {
+    pub product: ShopifyAdminProduct,
+}
