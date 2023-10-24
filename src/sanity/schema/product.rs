@@ -9,6 +9,7 @@ use crate::{
 
 #[derive(Serialize, Debug)]
 pub struct SanityProduct {
+    pub _id: String,
     pub _type: String,
     pub shopify_id: u64,
     pub admin_graphql_id: String,
