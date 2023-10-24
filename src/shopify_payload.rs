@@ -3,6 +3,7 @@
 */
 #![allow(non_snake_case)]
 
+pub mod admin_product;
 pub mod collection;
 pub mod product;
 
