@@ -1,5 +1,6 @@
 mod db_connect;
 mod env_config;
+mod graphql;
 mod http_client;
 mod root_route;
 mod sanity;
