@@ -107,14 +107,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                 info!("{} => Sync Job Action: {:?}", name, payload.action);
 
                                 for product in payload.products {
-                                    let images: Vec<SanityCustomImage> = upload_image(
-                                        product.images,
-                                        product.title.clone(),
-                                        &name,
-                                        &job.id,
-                                    )
-                                    .await;
-
+                                    // separate shopify_id and graphql_id
                                     let shopify_id: u64 = product
                                         .id
                                         .strip_prefix("gid://shopify/Product/")
@@ -123,8 +116,30 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                         .unwrap();
 
                                     let admin_graphql_id: String = product.id;
+
+                                    // get product image references.
+                                    let images: Vec<SanityCustomImage> = upload_image(
+                                        product.images,
+                                        product.title.clone(),
+                                        &name,
+                                        &job.id,
+                                    )
+                                    .await;
+
+                                    /*
+                                     * TODO: Category Stuff
+                                     * - Get the category of this product from shopify.
+                                     * - Get the cateogry data from sanity
+                                     *   - If category exists check if product is part of category
+                                     *      - If yes, then continue
+                                     *      - If no then create a mutation to push product to category.
+                                     * - The mutation for category will be an option. So if some then trigger
+                                     *   else move on.
+                                     */
+
                                     mutation_payload.mutations.push(Mutations::CreateOrReplace(
                                         SanityProduct {
+                                            _id: format!("shopifyProduct-{}", shopify_id),
                                             title: product.title.clone(),
                                             _type: "shopifyProduct".to_string(),
                                             shopify_id,
