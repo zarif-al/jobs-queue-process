@@ -9,6 +9,8 @@ pub struct EnvConfig {
     pub sanity_project_id: String,
     pub sanity_auth_token: String,
     pub sanity_dataset: String,
+    pub shopify_graphql_admin_api: String,
+    pub shopify_admin_api_token: String,
 }
 
 /*
@@ -30,6 +32,11 @@ pub fn get_env_config() -> EnvConfig {
         env::var("SANITY_AUTH_TOKEN").expect("SANITY_AUTH_TOKEN not defined in .env");
     let sanity_dataset = env::var("SANITY_DATASET").expect("SANITY_DATASET not defined in .env");
 
+    let shopify_graphql_admin_api = env::var("SHOPIFY_GRAPHQL_ADMIN_API")
+        .expect("SHOPIFY_GRAPHQL_ADMIN_API not defined in .env.");
+    let shopify_admin_api_token = env::var("SHOPIFY_ADMIN_API_AUTH_TOKEN")
+        .expect("SHOPIFY_ADMIN_API_AUTH_TOKEN not defined in .env");
+
     EnvConfig {
         port: port
             .parse::<u16>()
@@ -39,5 +46,7 @@ pub fn get_env_config() -> EnvConfig {
         sanity_auth_token,
         sanity_dataset,
         sanity_project_id,
+        shopify_graphql_admin_api,
+        shopify_admin_api_token,
     }
 }
