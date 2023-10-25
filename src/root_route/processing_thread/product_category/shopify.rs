@@ -1,26 +1,17 @@
 use std::collections::HashMap;
 
 use tracing::info;
-use urlencoding::encode;
 
 use crate::{
     env_config::get_env_config,
     graphql::{GraphQLRequest, GraphQLResponse, GraphQLResponseData},
     http_client::{get_http_client, ContenType},
-    sanity::http_endpoint::{get_sanity_endpoint, ApiMode},
 };
 
 /*
- * TODO: Category Stuff
- * - Get the category of this product from shopify.
- * - Get the cateogry data from sanity
- *   - If category exists check if product is part of category
- *      - If yes, then continue
- *      - If no then create a mutation to push product to category.
- * - The mutation for category will be an option. So if some then trigger
- *   else move on.
- */
-pub async fn category_check(product_graphql_id: String) {
+ This function will fetch the category of a product from shopify.
+*/
+pub async fn get_shopify_product_category(product_graphql_id: String) -> String {
     info!("Getting category info");
 
     let env_config = get_env_config();
@@ -40,11 +31,9 @@ pub async fn category_check(product_graphql_id: String) {
             }
         }"#;
 
+    // create variables
     let mut variables = HashMap::new();
-    variables.insert(
-        "id".to_string(),
-        "gid://shopify/Product/7841028800682".to_string(),
-    );
+    variables.insert("id".to_string(), product_graphql_id);
 
     // create graphql request
     let graphql_request = GraphQLRequest {
@@ -72,25 +61,5 @@ pub async fn category_check(product_graphql_id: String) {
         }
     };
 
-    // check if sanity has category and product in the category
-    let query = format!(
-        "*[ _type == 'shopifyCategory' && title == '{}'][0]{{ items[] }}",
-        category_name
-    );
-
-    // Percent-encode your query
-    let encoded_query = encode(&query).to_string();
-
-    let sanity_response = client
-        .get(format!(
-            "{}?query={}",
-            get_sanity_endpoint(ApiMode::Query),
-            encoded_query
-        ))
-        .send()
-        .await
-        .unwrap();
-
-    // TODO : Type sanity response
-    info!("Sanity Data : {:#?}", sanity_response.text().await.unwrap());
+    category_name
 }
