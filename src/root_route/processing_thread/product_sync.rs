@@ -1,7 +1,7 @@
 use redis_work_queue::Item;
 
 use crate::{
-    root_route::{processing_thread::category, processing_thread::upload_image},
+    root_route::{processing_thread::product_category, processing_thread::upload_image},
     sanity::{
         http_payload::{Mutations, SanityMutationPayload},
         schema::{
@@ -37,11 +37,11 @@ pub async fn product_sync(
         let images: Vec<SanityCustomImage> =
             upload_image::upload_image(product.images, product.title.clone(), &name, &job.id).await;
 
-        /*
-         * TODO: Category Stuff
-         */
-
-        category::category_check(admin_graphql_id.clone()).await;
+        // sync product category from shopify to sanity
+        let product_category =
+            product_category::shopify::get_shopify_product_category(admin_graphql_id.clone()).await;
+        // TODO : Update mutations payload
+        product_category::sanity::sync_sanity_category(product_category).await;
 
         mutation_payload
             .mutations
