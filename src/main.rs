@@ -44,30 +44,30 @@ async fn main() {
         "/",
         post({
             let tx_clone = tx.clone();
-            move |Json(payload): Json<RequestPayload>| root_route::handle(tx_clone, payload)
+            move |Json(payload): Json<RequestPayload>| root_route::handle::handle(tx_clone, payload)
         }),
     );
 
     // thread to listen and add jobs to queue
-    tokio::spawn(root_route::queue_thread(
+    tokio::spawn(root_route::queue_thread::queue_thread(
         String::from("Route: '/' Thread"),
         rx,
         Arc::clone(&work_queue),
     ));
 
     // threads to process jobs from queue
-    tokio::spawn(root_route::processing_thread(
+    tokio::spawn(root_route::processing_thread::processing_thread(
         "Processing Thread 1".to_string(),
         Arc::clone(&work_queue),
     ));
-    tokio::spawn(root_route::processing_thread(
-        "Processing Thread 2".to_string(),
-        Arc::clone(&work_queue),
-    ));
-    tokio::spawn(root_route::processing_thread(
-        "Processing Thread 3".to_string(),
-        Arc::clone(&work_queue),
-    ));
+    // tokio::spawn(root_route::processing_thread::processing_thread(
+    //     "Processing Thread 2".to_string(),
+    //     Arc::clone(&work_queue),
+    // ));
+    // tokio::spawn(root_route::processing_thread::processing_thread(
+    //     "Processing Thread 3".to_string(),
+    //     Arc::clone(&work_queue),
+    // ));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
 
