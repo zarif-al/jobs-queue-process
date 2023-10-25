@@ -4,12 +4,12 @@ mod graphql;
 mod http_client;
 mod root_route;
 mod sanity;
-mod shopify_payload;
+mod shopify;
 
 use axum::{extract::Json, routing::post, Router};
 use env_config::get_env_config;
 use redis_work_queue::{KeyPrefix, WorkQueue};
-use shopify_payload::RequestPayload;
+use shopify::RequestPayload;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::{error, info};
