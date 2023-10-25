@@ -1,24 +1,31 @@
 #![allow(non_snake_case)]
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::sanity::schema::product::SanityProduct;
-
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SanityCategoryCalloutItem {
     pub title: String,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SanityCategoryItemProductReference {
+    pub _ref: String,
+    pub _type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SanityCategoryItems {
-    SanityProduct(SanityProduct),
+    SanityProduct(SanityCategoryItemProductReference),
     SanityCategoryCalloutItem(SanityCategoryCalloutItem),
 }
 
-#[derive(Serialize, Debug)]
+/*
+ We did not inclue the `shortDescription` field as it is not
+ relevant to this app.
+*/
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SanityCategory {
     pub _id: String,
     pub title: String,
-    pub shortDescription: String,
     pub items: Vec<SanityCategoryItems>,
 }
