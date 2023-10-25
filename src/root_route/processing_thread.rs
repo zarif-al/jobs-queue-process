@@ -1,4 +1,4 @@
-mod category;
+mod product_category;
 mod product_sync;
 mod upload_image;
 
