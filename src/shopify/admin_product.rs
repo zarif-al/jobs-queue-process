@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ShopifyAdminProduct {
-    pub productCategory: ProductCategory,
+    pub productCategory: Option<ProductCategory>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
