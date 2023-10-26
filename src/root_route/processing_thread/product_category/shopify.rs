@@ -11,8 +11,8 @@ use crate::{
 /*
  This function will fetch the category of a product from shopify.
 */
-pub async fn get_shopify_product_category(product_graphql_id: String) -> String {
-    info!("Getting category info");
+pub async fn get_shopify_product_category(product_graphql_id: String) -> Option<String> {
+    info!("Getting Shopify category info");
 
     let env_config = get_env_config();
 
@@ -57,7 +57,10 @@ pub async fn get_shopify_product_category(product_graphql_id: String) -> String 
 
     let category_name = match shopify_response_body_json.data {
         GraphQLResponseData::GraphQLShopifyProductQueryResponse(data) => {
-            data.product.productCategory.productTaxonomyNode.name
+            match data.product.productCategory {
+                Some(category) => Some(category.productTaxonomyNode.name),
+                None => None,
+            }
         }
     };
 
