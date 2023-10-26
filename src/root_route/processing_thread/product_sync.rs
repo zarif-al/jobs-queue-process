@@ -40,8 +40,13 @@ pub async fn product_sync(
         // sync product category from shopify to sanity
         let product_category =
             product_category::shopify::get_shopify_product_category(admin_graphql_id.clone()).await;
-        // TODO : Update mutations payload
-        product_category::sanity::sync_sanity_category(product_category).await;
+
+        match product_category {
+            Some(category) => {
+                product_category::sanity::sync_sanity_category(category).await;
+            }
+            None => {}
+        }
 
         mutation_payload
             .mutations
@@ -63,7 +68,7 @@ pub async fn product_sync(
                     disableIndex: false,
                     disableSnippet: false,
                     openGraph: SanitySeoOpenGraph {
-                        image: images.first().unwrap().clone(),
+                        image: Some(images.first().unwrap().clone()),
                     },
                 },
                 shopify_created_at: product.createdAt,
