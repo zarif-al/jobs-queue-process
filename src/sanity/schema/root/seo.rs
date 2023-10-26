@@ -13,7 +13,7 @@ pub struct SanitySlug {
 
 #[derive(Serialize, Debug)]
 pub struct SanitySeoOpenGraph {
-    pub image: SanityCustomImage,
+    pub image: Option<SanityCustomImage>,
 }
 
 #[derive(Serialize, Debug)]
