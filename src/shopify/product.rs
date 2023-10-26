@@ -73,7 +73,7 @@ pub enum ShopifyProductStatus {
 pub struct ShopifyProduct {
     pub id: String,
     pub title: String,
-    pub featuredImage: ShopifyProductImage,
+    pub featuredImage: Option<ShopifyProductImage>,
     pub handle: String,
     pub images: Vec<ShopifyProductImage>,
     pub options: Vec<ShopifyProductOption>,
