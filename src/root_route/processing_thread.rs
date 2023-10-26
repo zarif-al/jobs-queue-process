@@ -54,7 +54,7 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
 
                         match job_data {
                             RequestPayload::PayloadProductSync(payload) => {
-                                info!("{} => Commencing Sync Job Action!", name);
+                                info!("{} => Product Sync Job Action!", name);
                                 product_sync::product_sync(
                                     &name,
                                     &job,
@@ -63,14 +63,14 @@ pub async fn processing_thread(name: String, work_queue: Arc<WorkQueue>) {
                                 )
                                 .await;
                             }
-                            RequestPayload::PayloadProductDelete(payload) => {
-                                info!("{} => Delete Job Action: {:?}", name, payload.action);
+                            RequestPayload::PayloadProductDelete(_) => {
+                                info!("{} => Product Delete Job Action", name);
                             }
-                            RequestPayload::PayloadCollectionsSync(payload) => {
-                                todo!()
+                            RequestPayload::PayloadCollectionsSync(_) => {
+                                info!("{} => Collection Sync Job Action", name);
                             }
-                            RequestPayload::PayloadCollectionsDelete(payload) => {
-                                todo!()
+                            RequestPayload::PayloadCollectionsDelete(_) => {
+                                info!("{} => Collection Delete Job Action", name);
                             }
                         }
 
