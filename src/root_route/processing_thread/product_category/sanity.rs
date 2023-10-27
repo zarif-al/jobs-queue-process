@@ -5,6 +5,7 @@ use crate::{
     http_client::{get_http_client, ContenType},
     sanity::{
         http_endpoint::{get_sanity_endpoint, ApiMode},
+        http_payload::SanityMutationPayload,
         schema::category::SanityCategory,
     },
 };
@@ -19,7 +20,7 @@ pub struct SanityCategoryQueryResponse {
 /*
 This function will sync the category and product with sanity.
 */
-pub async fn sync_sanity_category(category_id: String) {
+pub async fn sync_sanity_category(category_id: String, mutation_payload: &SanityMutationPayload) {
     let client = get_http_client(ContenType::Data);
 
     // check if sanity has category and product in the category
@@ -48,4 +49,6 @@ pub async fn sync_sanity_category(category_id: String) {
 
     // TODO : Type sanity response
     info!("Sanity Data : {:#?}", sanity_response_body_json);
+
+    
 }

@@ -43,7 +43,7 @@ pub async fn product_sync(
 
         match product_category {
             Some(category) => {
-                product_category::sanity::sync_sanity_category(category).await;
+                product_category::sanity::sync_sanity_category(category, &mutation_payload).await;
             }
             None => {}
         }
