@@ -1,43 +1,45 @@
-# Sanity Custom Sync
+# Jobs Queue Process
 
-This is a Rust implementation of an API server that will queue and execute jobs.
+This will be a Rust API that will receive payloads and process them in a queue system. The full feature list is provided below.
 
-The goal of this application is to create a multithreaded solution to queue jobs sent from `Sanity Connect` in shopify and execute them.
+## Technology
 
-### Benchmark
+- Rust
+- redis
 
-There is another [project](https://github.com/lemon-hive/sanity-custom-sync) that implements a similar solution using NestJS. We will consider that as the benchmark.
+### Rust crates
 
-### Current Implementation
-> This will be the base branch for Redis implementations.
+- `redis-work-queue`
+- `async-graphql`
+- `mongodb`
 
-This implementation uses a Redis database to store and execute jobs.
+## Requirements
 
-We will look at the following redis-queue crates:
+- We will use build this as a `graphql` server.
+- An endpoint for receiving payloads with the following format.
 
-- [redis_work_queue](https://docs.rs/redis-work-queue/latest/redis_work_queue/)
-  > This project is still in-progress. It does not re-start work that has not been complete. Will need keep an eye on this.
-- [apalis](https://crates.io/crates/apalis)
-- [sidekiq](https://crates.io/crates/sidekiq)
-- [celery](https://crates.io/crates/celery)
+    ```rust
+    struct Payload{
+    	message: String,
+    	email: String
+    }
+    ```
 
-When the application starts we have our app running in the main thread listening for requests, and we have a separate thread (`Processor Thread`) that checks the `jobs` queue for jobs.
+    Endpoint: `/post-job`
 
-### **Main Thread**
+- Once the endpoint receives the job it will add to a `redis` queue.
+- A separate thread will lease jobs from the queue and process them.
 
-When a `post` request hits the `/` route. The following things will happen.
+     If the job is successful we will post it into a mongo db and send an email about the job’s success.
 
-- We will create a new `Item` and add it to the `Work Queue`
-- We will return a response of `OK`
+    If the job fails we will send an email about the failure.
 
-### **Processor Thread**
-
-This thread will be created when the application starts, it will run in an infinite loop. It will do the following:
-
-- It will loop infinitely.
-- It will wait for a job. If one is available it will lease it with a lease expiry time. We will use `1 minute`
-- If found it will send that job to a new thread.
-
-    > In this space we have to figure out how to limit the total number of threads our application uses. Lets say we have a capacity of `4` threads, then we have to wait for one of the threads to finish.
+    > To mimic a heavy job we will make the thread sleep for `5` seconds.
     >
-- When the thread finishes it will call `Complete`
+
+    > Please Note: The package we will use for managing queues. `redis-work-queue` currently does not have a working method of cleaning up jobs. These are jobs that are left in a `processing` state because the server crashed or had been reset mid job progress.
+    >
+- We will have `1` thread to manage payload post requests and `5` threads to process jobs.
+- We will have another endpoint which will accept an email and return all the messages stored under that email.
+
+    Endpoint: `/messages`
