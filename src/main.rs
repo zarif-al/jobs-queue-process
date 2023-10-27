@@ -2,12 +2,9 @@ mod client;
 mod db_connect;
 mod env_config;
 mod root_route;
-mod sanity;
-mod shopify_payload;
 
-use axum::{routing::post, Json, Router};
+use axum::{routing::post, Router};
 use serde::Serialize;
-use shopify_payload::RequestPayload;
 use std::net::SocketAddr;
 use tracing::info;
 use tracing_subscriber;
@@ -26,10 +23,7 @@ async fn main() {
     let env_config = env_config::get_env_config();
 
     // build our application with a single route
-    let app = Router::new().route(
-        "/",
-        post(move |Json(payload): Json<RequestPayload>| root_route::handle(payload)),
-    );
+    let app = Router::new().route("/", post(move || root_route::handle()));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
     info!("App listening on {}", addr);
