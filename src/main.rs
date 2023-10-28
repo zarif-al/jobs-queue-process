@@ -3,7 +3,7 @@ mod db_connect;
 mod env_config;
 mod job_process;
 mod payload;
-mod post_job;
+mod post_job_route;
 
 use axum::{extract::Json, routing::post, Router};
 use payload::PostJobRequestPayload;
@@ -36,18 +36,18 @@ async fn main() {
     // build our application with a single route
     let app = Router::new().route(
         "/post-job",
-        post(move |Json(payload): Json<PostJobRequestPayload>| post_job::handle(tx, payload)),
+        post(move |Json(payload): Json<PostJobRequestPayload>| post_job_route::handle(tx, payload)),
     );
 
     // thread to listen and add jobs to queue
-    tokio::spawn(post_job::queue_thread(
+    tokio::spawn(post_job_route::queue_thread(
         String::from("Route: '/' Thread"),
         rx,
         Arc::clone(&work_queue),
     ));
 
     // thread to process jobs
-    tokio::spawn(post_job::process_thread(
+    tokio::spawn(post_job_route::process_thread(
         String::from("Process Thread 1"),
         Arc::clone(&work_queue),
     ));
