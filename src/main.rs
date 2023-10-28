@@ -6,7 +6,7 @@ mod payload;
 mod post_job;
 
 use axum::{extract::Json, routing::post, Router};
-use payload::RequestPayload;
+use payload::PostJobRequestPayload;
 use redis_work_queue::{KeyPrefix, WorkQueue};
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
@@ -31,12 +31,12 @@ async fn main() {
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
 
     // transmitters and receivers for job queue thread
-    let (tx, rx) = mpsc::channel::<RequestPayload>(32);
+    let (tx, rx) = mpsc::channel::<PostJobRequestPayload>(32);
 
     // build our application with a single route
     let app = Router::new().route(
         "/post-job",
-        post(move |Json(payload): Json<RequestPayload>| post_job::handle(tx, payload)),
+        post(move |Json(payload): Json<PostJobRequestPayload>| post_job::handle(tx, payload)),
     );
 
     // thread to listen and add jobs to queue

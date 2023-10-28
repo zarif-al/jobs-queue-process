@@ -7,7 +7,7 @@ use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info};
 
-use crate::{db_connect, job_process, payload::RequestPayload};
+use crate::{db_connect, job_process, payload::PostJobRequestPayload};
 
 #[derive(Serialize)]
 pub struct Response {
@@ -21,8 +21,8 @@ pub struct Response {
  Caution: This handler does not get called if the JSON parse fails.
 */
 pub async fn handle(
-    tx: Sender<RequestPayload>,
-    payload: RequestPayload,
+    tx: Sender<PostJobRequestPayload>,
+    payload: PostJobRequestPayload,
 ) -> (StatusCode, Json<Response>) {
     // job_process("Testing".to_string(), "zarif_al96@outlook.com".to_string()).await;
     // Send to thread to add to queue.
@@ -50,7 +50,7 @@ pub async fn handle(
 */
 pub async fn queue_thread(
     name: String,
-    mut rx: Receiver<RequestPayload>,
+    mut rx: Receiver<PostJobRequestPayload>,
     work_queue: Arc<WorkQueue>,
 ) {
     match db_connect::redis_conn().await {
@@ -97,7 +97,7 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                     Some(job) => {
                         info!("{} => Processing Job: {}", name, job.id,);
 
-                        let job_data = match job.data_json::<RequestPayload>() {
+                        let job_data = match job.data_json::<PostJobRequestPayload>() {
                             Ok(response) => response,
                             Err(_) => panic!("Could not process!"),
                         };
