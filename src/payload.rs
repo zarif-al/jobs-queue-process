@@ -5,7 +5,7 @@ pub struct PostJobResponsePayload {
     pub message: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PostJobRequestPayload {
     pub message: String,
     pub email: String,
@@ -18,6 +18,7 @@ pub struct RequestMessagesPayload {
 
 #[derive(Deserialize, Serialize)]
 pub struct MessagesResponsePayload {
-    pub email: String,
-    pub message: Vec<String>,
+    pub email: Option<String>,
+    pub messages: Option<Vec<String>>,
+    pub error: Option<String>,
 }
