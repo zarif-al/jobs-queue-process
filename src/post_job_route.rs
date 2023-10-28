@@ -6,8 +6,8 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info};
 
 use crate::{
-    db_connect, job_process,
-    payload::{PostJobRequestPayload, PostJobResponsePayload},
+    db_connect, job_process, req_res_structs::GeneralResponse,
+    req_res_structs::PostJobRequestPayload,
 };
 
 /*
@@ -19,7 +19,7 @@ use crate::{
 pub async fn handle(
     tx: Sender<PostJobRequestPayload>,
     payload: PostJobRequestPayload,
-) -> (StatusCode, Json<PostJobResponsePayload>) {
+) -> (StatusCode, Json<GeneralResponse>) {
     // job_process("Testing".to_string(), "zarif_al96@outlook.com".to_string()).await;
     // Send to thread to add to queue.
     tx.send(payload)
@@ -29,8 +29,9 @@ pub async fn handle(
     // Return OK response
     (
         StatusCode::OK,
-        Json(PostJobResponsePayload {
-            message: String::from("OK"),
+        Json(GeneralResponse {
+            message: Some(String::from("OK")),
+            error: None,
         }),
     )
 }
