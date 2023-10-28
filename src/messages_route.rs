@@ -12,47 +12,72 @@ pub async fn handle(
 ) -> (StatusCode, Json<MessagesResponsePayload>) {
     let mongo_conn = db_connect::mongo_conn().await;
 
-    match mongo_conn {
-        Some(collection) => {
-            let filter = doc! { "email" : payload.email.clone() };
+    match payload.email {
+        Some(email) => {
+            if email.is_empty() {
+                error!("Email parameter is empty.");
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(MessagesResponsePayload {
+                        email: None,
+                        messages: None,
+                        error: Some("Please provide a valid email".to_string()),
+                    }),
+                );
+            }
 
-            let request = collection.find(filter, None).await;
+            match mongo_conn {
+                Some(collection) => {
+                    let filter = doc! { "email" : email.clone() };
 
-            match request {
-                Ok(mut cursor) => {
-                    let mut messages: Vec<String> = vec![];
+                    let request = collection.find(filter, None).await;
 
-                    while cursor.advance().await.unwrap_or(false) {
-                        let data = cursor.current();
+                    match request {
+                        Ok(mut cursor) => {
+                            let mut messages: Vec<String> = vec![];
 
-                        let message = data.get_str("message").unwrap();
+                            while cursor.advance().await.unwrap_or(false) {
+                                let data = cursor.current();
 
-                        messages.push(message.to_string());
+                                let message = data.get_str("message").unwrap();
+
+                                messages.push(message.to_string());
+                            }
+
+                            // Return an ok response
+                            return (
+                                StatusCode::OK,
+                                Json(MessagesResponsePayload {
+                                    email: Some(email.clone()),
+                                    messages: Some(messages),
+                                    error: None,
+                                }),
+                            );
+                        }
+                        Err(_) => {
+                            error!(
+                                "Failed to query data from mongo. For query: {}",
+                                email.clone()
+                            );
+
+                            // Return an error response
+                            return (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                Json(MessagesResponsePayload {
+                                    error: Some("Failed to run mongo db query".to_string()),
+                                    email: None,
+                                    messages: None,
+                                }),
+                            );
+                        }
                     }
-
-                    println!("Messages: {:?}", messages);
-
-                    // Return an ok response
-                    return (
-                        StatusCode::OK,
-                        Json(MessagesResponsePayload {
-                            email: Some(payload.email.clone()),
-                            messages: Some(messages),
-                            error: None,
-                        }),
-                    );
                 }
-                Err(_) => {
-                    error!(
-                        "Failed to query data from mongo. For query: {}",
-                        payload.email.clone()
-                    );
-
+                None => {
                     // Return an error response
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
                         Json(MessagesResponsePayload {
-                            error: Some("Failed to run mongo db query".to_string()),
+                            error: Some("Failed to get mongo db client".to_string()),
                             email: None,
                             messages: None,
                         }),
@@ -61,13 +86,13 @@ pub async fn handle(
             }
         }
         None => {
-            // Return an error response
+            error!("Email parameter not found.");
             return (
-                StatusCode::INTERNAL_SERVER_ERROR,
+                StatusCode::BAD_REQUEST,
                 Json(MessagesResponsePayload {
-                    error: Some("Failed to get mongo db client".to_string()),
                     email: None,
                     messages: None,
+                    error: Some("Please provide an email parameter".to_string()),
                 }),
             );
         }
