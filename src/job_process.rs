@@ -7,7 +7,7 @@ pub async fn job_process(message: String, email: String) {
     let mongo_conn = mongo_conn().await;
 
     match mongo_conn {
-        Ok(conn) => {
+        Some(conn) => {
             let data_insert = conn
                 .insert_one(doc! {"email": email, "message": message}, None)
                 .await;
@@ -21,8 +21,8 @@ pub async fn job_process(message: String, email: String) {
                 }
             }
         }
-        Err(err) => {
-            error!("Failed to get mongo client. Error: {}", err);
+        None => {
+            error!("Failed to get mongo client");
         }
     }
 }
