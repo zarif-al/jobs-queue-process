@@ -2,11 +2,16 @@ mod client;
 mod db_connect;
 mod env_config;
 mod job_process;
+mod messages_route;
 mod payload;
 mod post_job_route;
 
-use axum::{extract::Json, routing::post, Router};
-use payload::PostJobRequestPayload;
+use axum::{
+    extract::{Json, Query},
+    routing::{get, post},
+    Router,
+};
+use payload::{PostJobRequestPayload, RequestMessagesPayload};
 use redis_work_queue::{KeyPrefix, WorkQueue};
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
@@ -34,10 +39,19 @@ async fn main() {
     let (tx, rx) = mpsc::channel::<PostJobRequestPayload>(32);
 
     // build our application with a single route
-    let app = Router::new().route(
-        "/post-job",
-        post(move |Json(payload): Json<PostJobRequestPayload>| post_job_route::handle(tx, payload)),
-    );
+    let app = Router::new()
+        .route(
+            "/post-job",
+            post(move |Json(payload): Json<PostJobRequestPayload>| {
+                post_job_route::handle(tx, payload)
+            }),
+        )
+        .route(
+            "/messages",
+            get(move |Query(payload): Query<RequestMessagesPayload>| {
+                messages_route::handle(payload)
+            }),
+        );
 
     // thread to listen and add jobs to queue
     tokio::spawn(post_job_route::queue_thread(
