@@ -2,12 +2,12 @@ mod client;
 mod db_connect;
 mod env_config;
 mod job_process;
-mod request_payload;
+mod payload;
 mod root_route;
 
 use axum::{extract::Json, routing::post, Router};
 use redis_work_queue::{KeyPrefix, WorkQueue};
-use request_payload::RequestPayload;
+use payload::RequestPayload;
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;

@@ -7,7 +7,7 @@ use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info};
 
-use crate::{db_connect, job_process, request_payload::RequestPayload};
+use crate::{db_connect, job_process, payload::RequestPayload};
 
 #[derive(Serialize)]
 pub struct Response {
