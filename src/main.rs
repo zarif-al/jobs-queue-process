@@ -29,16 +29,16 @@ async fn main() {
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt::init();
 
-    // check env config
+    // get env config
     let env_config = env_config::get_env_config();
 
     // create work queue
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
 
-    // transmitters and receivers for job queue thread
+    // transmitters and receivers to pass job to queue thread
     let (tx, rx) = mpsc::channel::<PostJobRequestPayload>(32);
 
-    // build our application with a single route
+    // build our application
     let app = Router::new()
         .route(
             "/post-job",
@@ -66,8 +66,10 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
+    // setup server address
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
     info!("App listening on {}", addr);
+
     // serve it with hyper on designated port
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
