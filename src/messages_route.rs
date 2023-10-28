@@ -4,12 +4,12 @@ use tracing::error;
 
 use crate::{
     db_connect,
-    payload::{MessagesResponsePayload, RequestMessagesPayload},
+    req_res_structs::{
+        GeneralResponse, MessagesRequestPayload, MessagesResponse, MessagesResponseEnum,
+    },
 };
 
-pub async fn handle(
-    payload: RequestMessagesPayload,
-) -> (StatusCode, Json<MessagesResponsePayload>) {
+pub async fn handle(payload: MessagesRequestPayload) -> (StatusCode, Json<MessagesResponseEnum>) {
     let mongo_conn = db_connect::mongo_conn().await;
 
     match payload.email {
@@ -35,27 +35,20 @@ pub async fn handle(
                             // Return an ok response
                             return (
                                 StatusCode::OK,
-                                Json(MessagesResponsePayload {
-                                    email: Some(email),
-                                    messages: Some(messages),
-                                    error: None,
-                                }),
+                                Json(MessagesResponseEnum::MessagesResponse(MessagesResponse {
+                                    email,
+                                    messages,
+                                })),
                             );
                         }
                         Err(_) => {
-                            error!(
-                                "Failed to query data from mongo. For query: {}",
-                                email.clone()
-                            );
-
                             // Return an error response
                             return (
                                 StatusCode::INTERNAL_SERVER_ERROR,
-                                Json(MessagesResponsePayload {
-                                    error: Some("Failed to run mongo db query".to_string()),
-                                    email: None,
-                                    messages: None,
-                                }),
+                                Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                                    error: Some(format!("Failed to query data from mongo.")),
+                                    message: None,
+                                })),
                             );
                         }
                     }
@@ -64,24 +57,23 @@ pub async fn handle(
                     // Return an error response
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(MessagesResponsePayload {
-                            error: Some("Failed to get mongo db client".to_string()),
-                            email: None,
-                            messages: None,
-                        }),
+                        Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                            error: Some(format!("Failed to get mongo connection")),
+                            message: None,
+                        })),
                     );
                 }
             }
         }
+        // TODO: Check if this is still necessary
         None => {
             error!("Email parameter not found.");
             return (
                 StatusCode::BAD_REQUEST,
-                Json(MessagesResponsePayload {
-                    email: None,
-                    messages: None,
-                    error: Some("Please provide an email parameter".to_string()),
-                }),
+                Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                    error: Some(format!("Please provide email parameter")),
+                    message: None,
+                })),
             );
         }
     }
