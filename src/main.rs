@@ -3,16 +3,16 @@ mod db_connect;
 mod env_config;
 mod job_process;
 mod messages_route;
-mod payload;
 mod post_job_route;
+mod req_res_structs;
 
 use axum::{
     extract::{Json, Query},
     routing::{get, post},
     Router,
 };
-use payload::{PostJobRequestPayload, RequestMessagesPayload};
 use redis_work_queue::{KeyPrefix, WorkQueue};
+use req_res_structs::{MessagesRequestPayload, PostJobRequestPayload};
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
@@ -48,7 +48,7 @@ async fn main() {
         )
         .route(
             "/messages",
-            get(move |Query(payload): Query<RequestMessagesPayload>| {
+            get(move |Query(payload): Query<MessagesRequestPayload>| {
                 messages_route::handle(payload)
             }),
         );
