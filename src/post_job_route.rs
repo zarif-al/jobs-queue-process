@@ -1,18 +1,14 @@
 use axum::{http::StatusCode, Json};
-use mongodb::bson::doc;
-use serde::Serialize;
 use std::{sync::Arc, time::Duration};
 
 use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info};
 
-use crate::{db_connect, job_process, payload::PostJobRequestPayload};
-
-#[derive(Serialize)]
-pub struct Response {
-    message: String,
-}
+use crate::{
+    db_connect, job_process,
+    payload::{PostJobRequestPayload, PostJobResponsePayload},
+};
 
 /*
  This handler will accept the body of a post request and pass it along
@@ -23,7 +19,7 @@ pub struct Response {
 pub async fn handle(
     tx: Sender<PostJobRequestPayload>,
     payload: PostJobRequestPayload,
-) -> (StatusCode, Json<Response>) {
+) -> (StatusCode, Json<PostJobResponsePayload>) {
     // job_process("Testing".to_string(), "zarif_al96@outlook.com".to_string()).await;
     // Send to thread to add to queue.
     tx.send(payload)
@@ -33,7 +29,7 @@ pub async fn handle(
     // Return OK response
     (
         StatusCode::OK,
-        Json(Response {
+        Json(PostJobResponsePayload {
             message: String::from("OK"),
         }),
     )
