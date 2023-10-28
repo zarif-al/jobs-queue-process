@@ -1,13 +1,13 @@
 use axum::{http::StatusCode, Json};
 use mongodb::bson::doc;
 use serde::Serialize;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
-use tracing::info;
+use tracing::{error, info};
 
-use crate::{db_connect, request_payload::RequestPayload};
+use crate::{db_connect, job_process, request_payload::RequestPayload};
 
 #[derive(Serialize)]
 pub struct Response {
@@ -74,5 +74,47 @@ pub async fn queue_thread(
         None => {
             panic!("{} => Failed to connect to db.", name);
         }
+    }
+}
+
+pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
+    let redis_conn = db_connect::redis_conn().await;
+
+    match redis_conn {
+        Some(mut conn) => loop {
+            info!("{} => Ready to process jobs!", name);
+            loop {
+                let job: Option<Item> = work_queue
+                    .lease(
+                        &mut conn,
+                        Some(Duration::from_secs(5)),
+                        Duration::from_secs(60),
+                    )
+                    .await
+                    .expect("Failed to lease a job!");
+
+                match job {
+                    Some(job) => {
+                        info!("{} => Processing Job: {}", name, job.id,);
+
+                        let job_data = match job.data_json::<RequestPayload>() {
+                            Ok(response) => response,
+                            Err(_) => panic!("Could not process!"),
+                        };
+
+                        job_process::job_process(job_data.message, job_data.email).await;
+
+                        work_queue
+                            .complete(&mut conn, &job)
+                            .await
+                            .expect("Failed to mark a job as incomplete!");
+
+                        info!("{} => Completed Processing Job: {}", name, job.id);
+                    }
+                    None => continue,
+                }
+            }
+        },
+        None => error!("{} => Failed to connect to redis db", name),
     }
 }
