@@ -3,7 +3,10 @@ use reqwest::{
     Client,
 };
 
-pub fn get_client() -> Client {
+/*
+ TODO: This is marked as unused
+*/
+pub fn _get_client() -> Client {
     let client_builder = reqwest::Client::builder();
 
     let mut headers = HeaderMap::new();
