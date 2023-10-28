@@ -14,21 +14,9 @@ pub async fn handle(
 
     match payload.email {
         Some(email) => {
-            if email.is_empty() {
-                error!("Email parameter is empty.");
-                return (
-                    StatusCode::BAD_REQUEST,
-                    Json(MessagesResponsePayload {
-                        email: None,
-                        messages: None,
-                        error: Some("Please provide a valid email".to_string()),
-                    }),
-                );
-            }
-
             match mongo_conn {
                 Some(collection) => {
-                    let filter = doc! { "email" : email.clone() };
+                    let filter = doc! { "email" : email.to_string() };
 
                     let request = collection.find(filter, None).await;
 
@@ -48,7 +36,7 @@ pub async fn handle(
                             return (
                                 StatusCode::OK,
                                 Json(MessagesResponsePayload {
-                                    email: Some(email.clone()),
+                                    email: Some(email),
                                     messages: Some(messages),
                                     error: None,
                                 }),
