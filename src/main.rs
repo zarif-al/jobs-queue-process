@@ -46,6 +46,12 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
+    // thread to process jobs
+    tokio::spawn(root_route::process_thread(
+        String::from("Process Thread 1"),
+        Arc::clone(&work_queue),
+    ));
+
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
     info!("App listening on {}", addr);
     // serve it with hyper on designated port
