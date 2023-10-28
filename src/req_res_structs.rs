@@ -15,7 +15,7 @@ pub struct PostJobRequestPayload {
 
 #[derive(Deserialize, Serialize)]
 pub struct MessagesRequestPayload {
-    pub email: Option<Email>,
+    pub email: Email,
 }
 
 #[derive(Deserialize, Serialize)]
