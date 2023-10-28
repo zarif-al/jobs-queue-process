@@ -98,7 +98,8 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                             Err(_) => panic!("Could not process!"),
                         };
 
-                        job_process::job_process(job_data.message, job_data.email).await;
+                        job_process::job_process(job_data.message, job_data.email.to_string())
+                            .await;
 
                         work_queue
                             .complete(&mut conn, &job)
