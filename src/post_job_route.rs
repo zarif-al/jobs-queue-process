@@ -1,18 +1,14 @@
 use axum::{http::StatusCode, Json};
-use mongodb::bson::doc;
-use serde::Serialize;
 use std::{sync::Arc, time::Duration};
 
 use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info};
 
-use crate::{db_connect, job_process, request_payload::RequestPayload};
-
-#[derive(Serialize)]
-pub struct Response {
-    message: String,
-}
+use crate::{
+    db_connect, job_process,
+    payload::{PostJobRequestPayload, PostJobResponsePayload},
+};
 
 /*
  This handler will accept the body of a post request and pass it along
@@ -21,9 +17,9 @@ pub struct Response {
  Caution: This handler does not get called if the JSON parse fails.
 */
 pub async fn handle(
-    tx: Sender<RequestPayload>,
-    payload: RequestPayload,
-) -> (StatusCode, Json<Response>) {
+    tx: Sender<PostJobRequestPayload>,
+    payload: PostJobRequestPayload,
+) -> (StatusCode, Json<PostJobResponsePayload>) {
     // job_process("Testing".to_string(), "zarif_al96@outlook.com".to_string()).await;
     // Send to thread to add to queue.
     tx.send(payload)
@@ -33,7 +29,7 @@ pub async fn handle(
     // Return OK response
     (
         StatusCode::OK,
-        Json(Response {
+        Json(PostJobResponsePayload {
             message: String::from("OK"),
         }),
     )
@@ -50,7 +46,7 @@ pub async fn handle(
 */
 pub async fn queue_thread(
     name: String,
-    mut rx: Receiver<RequestPayload>,
+    mut rx: Receiver<PostJobRequestPayload>,
     work_queue: Arc<WorkQueue>,
 ) {
     match db_connect::redis_conn().await {
@@ -97,12 +93,13 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                     Some(job) => {
                         info!("{} => Processing Job: {}", name, job.id,);
 
-                        let job_data = match job.data_json::<RequestPayload>() {
+                        let job_data = match job.data_json::<PostJobRequestPayload>() {
                             Ok(response) => response,
                             Err(_) => panic!("Could not process!"),
                         };
 
-                        job_process::job_process(job_data.message, job_data.email).await;
+                        job_process::job_process(job_data.message, job_data.email.to_string())
+                            .await;
 
                         work_queue
                             .complete(&mut conn, &job)
