@@ -57,9 +57,9 @@ pub async fn redis_conn() -> Option<Connection> {
  This function will try to return a mongodb connection.
 */
 pub async fn mongo_conn() -> Option<Collection<Document>> {
-    let mut retries = 0;
-
     let env_config = get_env_config();
+
+    let mut retries = 0;
 
     while retries != RETRY_COUNT {
         if retries > 1 {
