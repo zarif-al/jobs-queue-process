@@ -17,13 +17,17 @@ pub struct EnvConfig {
 pub fn get_env_config() -> EnvConfig {
     dotenv().ok();
 
-    // get redis work queue name
+    // Get all necessary env variables
+    // Trigger panic()! if any env is missing
     let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not defined in .env");
+
     let redis_work_queue =
         env::var("REDIS_WORK_QUEUE").expect("REDIS_WORK_QUEUE is not set in .env");
+
     let port = env::var("PORT").expect("PORT is not defined in the .env");
 
     let mongo_uri = env::var("MONGO_URI").expect("MONGO_URI not found in .env.");
+
     let mongo_db_name =
         env::var("MONGO_DB_NAME").expect("MONGO_DB_NAME is not defined in the .env");
 
