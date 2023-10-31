@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 
 use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::{Receiver, Sender};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use crate::{
     db_connect, job_process, req_res_structs::GeneralResponse,
@@ -99,15 +99,28 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                             Err(_) => panic!("Could not process!"),
                         };
 
-                        job_process::job_process(job_data.message, job_data.email.to_string())
-                            .await;
-
-                        work_queue
-                            .complete(&mut conn, &job)
+                        // call db_insert with job data
+                        match job_process::db_insert(job_data.message, job_data.email.to_string())
                             .await
-                            .expect("Failed to mark a job as incomplete!");
+                        {
+                            Some(()) => {
+                                // Mark job as completed if db_insert returns Some()
+                                work_queue
+                                    .complete(&mut conn, &job)
+                                    .await
+                                    .expect("Failed to mark a job as incomplete.");
+                                info!("{} => Completed processing job: {}", name, job.id);
+                            }
+                            None => {
+                                // Re-queue job if db_insert returns None
+                                work_queue
+                                    .add_item(&mut conn, &job)
+                                    .await
+                                    .expect("Failed to re-queue job after failure.");
 
-                        info!("{} => Completed Processing Job: {}", name, job.id);
+                                warn!("{} => Re-queing job: {}", name, job.id);
+                            }
+                        }
                     }
                     None => continue,
                 }
