@@ -1,3 +1,6 @@
+/*
+ TODO: We should look into having connection pools.
+*/
 use std::time::Duration;
 
 use mongodb::bson::Document;
@@ -12,9 +15,7 @@ const RETRY_COUNT: i32 = 10;
 const RETRY_DELAY: Duration = Duration::from_secs(10);
 
 /*
- This function will try to return a redis connection.
- TODO: We should look into caching the response of this function when
- we have successfull connection.
+ This function will try to return an async redis connection.
 */
 pub async fn redis_conn() -> Option<Connection> {
     let env_config = get_env_config();
@@ -26,13 +27,13 @@ pub async fn redis_conn() -> Option<Connection> {
             info!("Redis Connection Attempt: {retries}");
         }
 
-        // try to connect to redis client
         let client = &mut redis::Client::open(format!("redis://{}/", env_config.redis_url));
 
         match client {
             Ok(client) => {
-                // try to get an async connection from client
-                match client.get_async_connection().await {
+                let async_conn = client.get_async_connection().await;
+
+                match async_conn {
                     Ok(conn) => {
                         return Some(conn);
                     }
@@ -53,7 +54,7 @@ pub async fn redis_conn() -> Option<Connection> {
 }
 
 /*
- This function will create a connection to mongodb and return it.
+ This function will try to return a mongodb connection.
 */
 pub async fn mongo_conn() -> Option<Collection<Document>> {
     let mut retries = 0;
@@ -70,6 +71,7 @@ pub async fn mongo_conn() -> Option<Collection<Document>> {
         match client_options {
             Ok(mut options) => {
                 options.app_name = Some("Jobs Queue Process".to_string());
+
                 let client = Client::with_options(options);
 
                 match client {
