@@ -1,9 +1,18 @@
 use mongodb::bson::doc;
 
 use crate::db_connect::mongo_conn;
-use tracing::{error, info};
+use tracing::error;
 
-pub async fn job_process(message: String, email: String) {
+/**
+ * This function inserts the provided message and email to a db.
+ *
+ * Each message and email combination is inserted as a single doc.
+ *
+ * If data is successfully inserted into the db then this function
+ * will return a unit type or None.
+ *
+ */
+pub async fn db_insert(message: String, email: String) -> Option<()> {
     let mongo_conn = mongo_conn().await;
 
     match mongo_conn {
@@ -13,16 +22,16 @@ pub async fn job_process(message: String, email: String) {
                 .await;
 
             match data_insert {
-                Ok(_) => {
-                    info!("Inserted document successfully.");
-                }
+                Ok(_) => Some(()),
                 Err(err) => {
-                    error!("Failed to insert document. Error: {}", err);
+                    error!("DB insert failed, Error message: {}", err);
+                    None
                 }
             }
         }
         None => {
-            error!("Failed to get mongo client");
+            error!("DB insert failed, Error message: Failed to acquire mongo_db connection");
+            None
         }
     }
 }
