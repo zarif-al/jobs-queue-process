@@ -11,18 +11,22 @@ use tracing::{error, info, warn};
 
 use crate::env_config::get_env_config;
 
-const RETRY_COUNT: i32 = 10;
+const RETRY_LIMIT: i32 = 10;
 const RETRY_DELAY: Duration = Duration::from_secs(10);
 
 /*
  This function will try to return an async redis connection.
+
+ If connection attempts fail it will wait for `RETRY_DELAY` seconds and
+ retry for `RETRY_LIMIT` amount of times
 */
 pub async fn redis_conn() -> Option<Connection> {
     let env_config = get_env_config();
 
+    // Track the retry attempts
     let mut retries = 0;
 
-    while retries != RETRY_COUNT {
+    while retries != RETRY_LIMIT {
         if retries > 1 {
             info!("Redis Connection Attempt: {retries}");
         }
@@ -55,13 +59,17 @@ pub async fn redis_conn() -> Option<Connection> {
 
 /*
  This function will try to return a mongodb connection.
+
+ If connection attempts fail it will wait for `RETRY_DELAY` seconds and
+ retry for `RETRY_LIMIT` amount of times
 */
 pub async fn mongo_conn() -> Option<Collection<Document>> {
     let env_config = get_env_config();
 
+    // Track the retry attempts
     let mut retries = 0;
 
-    while retries != RETRY_COUNT {
+    while retries != RETRY_LIMIT {
         if retries > 1 {
             info!("Mongo Connection Attempt: {retries}");
         }
@@ -97,7 +105,7 @@ pub async fn mongo_conn() -> Option<Collection<Document>> {
 }
 
 async fn handle_conn_failure(current_retry_count: i32, db_name: String, err: String) {
-    if current_retry_count + 1 == RETRY_COUNT {
+    if current_retry_count + 1 == RETRY_LIMIT {
         error!(
             "App => Failed to get {} db client/connection. Error Message: {}.",
             db_name, err
