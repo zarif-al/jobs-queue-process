@@ -1,7 +1,7 @@
 mod client;
 mod db_connect;
 mod env_config;
-mod job_process;
+mod processor;
 mod messages_route;
 mod post_job_route;
 mod req_res_structs;

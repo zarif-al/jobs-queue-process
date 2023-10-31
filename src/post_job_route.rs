@@ -6,7 +6,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info, warn};
 
 use crate::{
-    db_connect, job_process, req_res_structs::GeneralResponse,
+    db_connect, processor, req_res_structs::GeneralResponse,
     req_res_structs::PostJobRequestPayload,
 };
 
@@ -100,7 +100,7 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                         };
 
                         // call db_insert with job data
-                        match job_process::db_insert(job_data.message, job_data.email.to_string())
+                        match processor::db_insert(job_data.message, job_data.email.to_string())
                             .await
                         {
                             Some(()) => {
