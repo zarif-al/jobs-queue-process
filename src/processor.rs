@@ -1,6 +1,6 @@
-use mongodb::bson::doc;
+use serde_email::Email;
 
-use crate::db_connect::mongo_conn;
+use crate::{db_connect::mongo_conn, req_res_structs::PostJobRequestPayload};
 use tracing::error;
 
 /**
@@ -12,13 +12,13 @@ use tracing::error;
  * will return a unit type or None.
  *
  */
-pub async fn db_insert(message: String, email: String) -> Option<()> {
+pub async fn db_insert(message: String, email: Email) -> Option<()> {
     let mongo_conn = mongo_conn().await;
 
     match mongo_conn {
         Some(conn) => {
             let data_insert = conn
-                .insert_one(doc! {"email": email, "message": message}, None)
+                .insert_one(PostJobRequestPayload { email, message }, None)
                 .await;
 
             match data_insert {
