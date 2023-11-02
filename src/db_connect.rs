@@ -3,7 +3,6 @@
 */
 use std::time::Duration;
 
-use mongodb::bson::Document;
 use mongodb::{options::ClientOptions, Client, Collection};
 use redis::aio::Connection;
 use tokio::time::sleep;
@@ -62,8 +61,11 @@ pub async fn redis_conn() -> Option<Connection> {
 
  If connection attempts fail it will wait for `RETRY_DELAY` seconds and
  retry for `RETRY_LIMIT` amount of times
+
+ This function expects a generic type that is passed to the
+ collection method to return a typed collection
 */
-pub async fn mongo_conn() -> Option<Collection<Document>> {
+pub async fn mongo_conn<T>() -> Option<Collection<T>> {
     let env_config = get_env_config();
 
     // Track the retry attempts
@@ -85,8 +87,7 @@ pub async fn mongo_conn() -> Option<Collection<Document>> {
                 match client {
                     Ok(client) => {
                         let db = client.database(&env_config.mongo_db_name);
-
-                        return Some(db.collection::<Document>("jobs"));
+                        return Some(db.collection::<T>("jobs"));
                     }
                     Err(err) => {
                         handle_conn_failure(retries, "mongo".to_string(), err.to_string()).await;
