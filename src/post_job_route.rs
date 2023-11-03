@@ -91,6 +91,7 @@ pub async fn queue_thread(
             }
         }
         None => {
+            // TODO: Re-think error handling
             panic!("{} => Failed to connect to db.", name);
         }
     }
@@ -148,7 +149,10 @@ pub async fn process_thread(name: String, work_queue: Arc<WorkQueue>) {
                                         }
                                     }
                                 }
-                                Err(_) => panic!("Could not process!"),
+                                Err(_) => {
+                                    // TODO: Re-think error handling
+                                    panic!("Could not process!")
+                                }
                             };
                         }
                         None => continue,
