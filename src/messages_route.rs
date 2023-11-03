@@ -4,84 +4,101 @@ use tracing::error;
 
 use crate::{
     db_connect,
-    payload::{MessagesResponsePayload, RequestMessagesPayload},
+    req_res_structs::{
+        GeneralResponse, MessagesRequestPayload, MessagesResponse, MessagesResponseEnum,
+        PostJobRequestPayload,
+    },
 };
 
-pub async fn handle(
-    payload: RequestMessagesPayload,
-) -> (StatusCode, Json<MessagesResponsePayload>) {
-    let mongo_conn = db_connect::mongo_conn().await;
+pub async fn handle(payload: MessagesRequestPayload) -> (StatusCode, Json<MessagesResponseEnum>) {
+    let mongo_conn = db_connect::mongo_conn::<PostJobRequestPayload>().await;
 
-    match payload.email {
-        Some(email) => {
-            match mongo_conn {
-                Some(collection) => {
-                    let filter = doc! { "email" : email.to_string() };
+    match mongo_conn {
+        Some(collection) => {
+            let mongo_query_filter = doc! { "email" : payload.email.to_string() };
 
-                    let request = collection.find(filter, None).await;
+            // collection.find() returns a cursor that streams the results as it gets iterated
+            let mongo_result_cursor = collection.find(mongo_query_filter, None).await;
 
-                    match request {
-                        Ok(mut cursor) => {
-                            let mut messages: Vec<String> = vec![];
+            match mongo_result_cursor {
+                Ok(mut cursor) => {
+                    let mut messages: Vec<String> = vec![];
 
-                            while cursor.advance().await.unwrap_or(false) {
-                                let data = cursor.current();
+                    loop {
+                        let current_cursor = cursor.advance().await;
 
-                                let message = data.get_str("message").unwrap();
-
-                                messages.push(message.to_string());
+                        match current_cursor {
+                            /*
+                               If new results are returned by then attempt to
+                               access data.
+                            */
+                            Ok(doc_exists) => {
+                                if doc_exists {
+                                    match cursor.deserialize_current() {
+                                        Ok(data) => {
+                                            messages.push(data.message);
+                                            continue;
+                                        }
+                                        Err(err) => {
+                                            error!(
+                                                "Failed to get data from cursor. Error Message: {}",
+                                                err
+                                            );
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    // The cursor is closed. There is no more data.
+                                    break;
+                                }
                             }
-
-                            // Return an ok response
-                            return (
-                                StatusCode::OK,
-                                Json(MessagesResponsePayload {
-                                    email: Some(email),
-                                    messages: Some(messages),
-                                    error: None,
-                                }),
-                            );
-                        }
-                        Err(_) => {
-                            error!(
-                                "Failed to query data from mongo. For query: {}",
-                                email.clone()
-                            );
-
-                            // Return an error response
-                            return (
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                Json(MessagesResponsePayload {
-                                    error: Some("Failed to run mongo db query".to_string()),
-                                    email: None,
-                                    messages: None,
-                                }),
-                            );
+                            Err(err) => {
+                                error!("Failed to advance cursor. Error Message: {}", err);
+                                break;
+                            }
                         }
                     }
+
+                    if messages.len() > 0 {
+                        // Return all messages
+                        return (
+                            StatusCode::OK,
+                            Json(MessagesResponseEnum::MessagesResponse(MessagesResponse {
+                                email: payload.email,
+                                messages,
+                            })),
+                        );
+                    } else {
+                        // Return a general response
+                        return (
+                            StatusCode::OK,
+                            Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                                message: Some("No messages found for this email".to_string()),
+                                error: None,
+                            })),
+                        );
+                    }
                 }
-                None => {
+                Err(_) => {
                     // Return an error response
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(MessagesResponsePayload {
-                            error: Some("Failed to get mongo db client".to_string()),
-                            email: None,
-                            messages: None,
-                        }),
+                        Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                            error: Some(format!("Failed to query data from mongo.")),
+                            message: None,
+                        })),
                     );
                 }
             }
         }
         None => {
-            error!("Email parameter not found.");
+            // Return an error response
             return (
-                StatusCode::BAD_REQUEST,
-                Json(MessagesResponsePayload {
-                    email: None,
-                    messages: None,
-                    error: Some("Please provide an email parameter".to_string()),
-                }),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
+                    error: Some(format!("Failed to get mongo connection")),
+                    message: None,
+                })),
             );
         }
     }

@@ -1,18 +1,18 @@
 mod client;
 mod db_connect;
 mod env_config;
-mod job_process;
 mod messages_route;
-mod payload;
 mod post_job_route;
+mod processor;
+mod req_res_structs;
 
 use axum::{
     extract::{Json, Query},
     routing::{get, post},
     Router,
 };
-use payload::{PostJobRequestPayload, RequestMessagesPayload};
 use redis_work_queue::{KeyPrefix, WorkQueue};
+use req_res_structs::{MessagesRequestPayload, PostJobRequestPayload};
 use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
@@ -29,16 +29,16 @@ async fn main() {
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt::init();
 
-    // check env config
+    // get env config
     let env_config = env_config::get_env_config();
 
     // create work queue
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
 
-    // transmitters and receivers for job queue thread
+    // transmitters and receivers to pass job to queue thread
     let (tx, rx) = mpsc::channel::<PostJobRequestPayload>(32);
 
-    // build our application with a single route
+    // build our application
     let app = Router::new()
         .route(
             "/post-job",
@@ -48,7 +48,7 @@ async fn main() {
         )
         .route(
             "/messages",
-            get(move |Query(payload): Query<RequestMessagesPayload>| {
+            get(move |Query(payload): Query<MessagesRequestPayload>| {
                 messages_route::handle(payload)
             }),
         );
@@ -66,8 +66,10 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
+    // setup server address
     let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
     info!("App listening on {}", addr);
+
     // serve it with hyper on designated port
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
