@@ -3,9 +3,9 @@ use mongodb::bson::doc;
 use serde_email::is_valid_email;
 use tracing::error;
 
-use crate::{
-    db,
-    entities::{DBMessage, DBMessageList},
+use crate::db::{
+    mongo_conn,
+    mongo_entities::{DBMessage, DBMessageList},
 };
 
 pub struct GraphQLQueryRoot;
@@ -16,7 +16,7 @@ impl GraphQLQueryRoot {
         let is_valid_email = is_valid_email(&email);
 
         if is_valid_email {
-            let mongo_conn = db::mongo_conn::<DBMessage>().await;
+            let mongo_conn = mongo_conn::<DBMessage>().await;
 
             match mongo_conn {
                 Some(collection) => {

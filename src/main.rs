@@ -1,5 +1,4 @@
 mod db;
-mod entities;
 mod env_config;
 mod graphql;
 mod threads;
@@ -18,7 +17,7 @@ use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber;
 
-use entities::DBMessage;
+use db::mongo_entities::DBMessage;
 use threads::{process_jobs, queue_jobs};
 
 async fn graphiql() -> impl IntoResponse {

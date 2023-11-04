@@ -3,10 +3,10 @@ use std::{sync::Arc, time::Duration};
 use redis_work_queue::WorkQueue;
 use tracing::{error, info, warn};
 
-use crate::{db, entities::DBMessage};
+use crate::db::{mongo_entities::DBMessage, mongo_message, redis_conn};
 
 pub async fn process_jobs(name: String, work_queue: Arc<WorkQueue>) {
-    let redis_conn = db::redis_conn().await;
+    let redis_conn = redis_conn().await;
 
     match redis_conn {
         Some(mut conn) => loop {
@@ -26,7 +26,7 @@ pub async fn process_jobs(name: String, work_queue: Arc<WorkQueue>) {
                             match job.data_json::<DBMessage>() {
                                 Ok(data) => {
                                     // call db_insert with response data
-                                    match db::message::insert(data.message, data.email).await {
+                                    match mongo_message::insert(data.message, data.email).await {
                                         Some(()) => {
                                             // Mark job as completed if db_insert returns Some()
                                             match work_queue.complete(&mut conn, &job).await {

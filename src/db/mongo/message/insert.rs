@@ -1,4 +1,4 @@
-use crate::{db::mongo_conn, entities::DBMessage};
+use crate::db::{mongo_conn, mongo_entities::DBMessage};
 use tracing::error;
 
 /**

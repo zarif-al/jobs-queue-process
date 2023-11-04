@@ -4,7 +4,7 @@ use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info};
 
-use crate::{db, entities::DBMessage};
+use crate::db::{mongo_entities::DBMessage, redis_conn};
 
 /*
  This thread will receive jobs from the `/` route handler and
@@ -16,7 +16,7 @@ use crate::{db, entities::DBMessage};
  Otherwise it will panic!().
 */
 pub async fn queue_jobs(name: String, mut rx: Receiver<DBMessage>, work_queue: Arc<WorkQueue>) {
-    match db::redis_conn().await {
+    match redis_conn().await {
         Some(mut conn) => {
             info!("{} => Ready to receive jobs!", name);
 
