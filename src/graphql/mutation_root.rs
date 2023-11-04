@@ -5,7 +5,7 @@ use tracing::error;
 
 use crate::db::mongo_entities::DBMessage;
 
-use crate::graphql::req_res_structs::GeneralResponse;
+use crate::graphql::helper_structs::GeneralResponse;
 
 pub struct GraphQLMutationRoot;
 
