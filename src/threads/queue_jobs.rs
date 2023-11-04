@@ -1,3 +1,7 @@
+/*
+This module contains the code to add jobs to
+redis queue.
+*/
 use std::sync::Arc;
 
 use redis_work_queue::{Item, WorkQueue};

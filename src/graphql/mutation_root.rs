@@ -1,3 +1,6 @@
+/*
+This module contains all the mutations for this application.
+*/
 use async_graphql::{Context, Error, Object};
 use serde_email::is_valid_email;
 use tokio::sync::mpsc::Sender;

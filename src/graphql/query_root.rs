@@ -1,3 +1,6 @@
+/*
+This module contains all the queries for this application.
+*/
 use async_graphql::{Error, Object};
 use serde_email::is_valid_email;
 

@@ -1,3 +1,6 @@
+/*
+This module contains common logic used by db modules.
+*/
 use std::time::Duration;
 
 use tokio::time::sleep;

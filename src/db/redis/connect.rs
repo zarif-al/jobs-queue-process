@@ -1,4 +1,7 @@
 /*
+This module contains code to connect with redis db.
+*/
+/*
  TODO: We should look into having connection pools.
 */
 

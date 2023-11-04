@@ -3,6 +3,16 @@ use tracing::error;
 
 use crate::db::{mongo_conn, mongo_message::DBMessage};
 
+/*
+This function will accept an EMAIL and fetch all the DBMessage objects
+stored in mongo db that contain the provided EMAIL. It will push the messages
+in an STRING vector.
+
+It return an Option<Vec<String>>.
+
+If its successfull in getting data from the db it will returns
+a Vec<String> else it returns None
+*/
 pub async fn get_messages(email: &String) -> Option<Vec<String>> {
     let mongo_conn = mongo_conn::<DBMessage>().await;
 

@@ -1,3 +1,8 @@
+/*
+This module will contain database related code such as
+    - getting database connections
+    - carrying our CRUD operations against databases
+*/
 mod common;
 mod mongo;
 mod redis;

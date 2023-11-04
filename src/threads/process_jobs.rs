@@ -1,3 +1,7 @@
+/*
+This module contains the code to process jobs from
+redis queue.
+*/
 use std::{sync::Arc, time::Duration};
 
 use redis_work_queue::WorkQueue;
