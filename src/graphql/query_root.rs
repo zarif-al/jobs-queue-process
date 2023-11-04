@@ -3,16 +3,14 @@ use mongodb::bson::doc;
 use serde_email::is_valid_email;
 use tracing::error;
 
-use crate::db::{
-    mongo_conn,
-    mongo_entities::{DBMessage, DBMessageList},
-};
+use crate::db::{mongo_conn, mongo_entities::DBMessage};
+use crate::graphql::helper_structs::ResolvedMessageList;
 
 pub struct GraphQLQueryRoot;
 
 #[Object]
 impl GraphQLQueryRoot {
-    async fn get_messages(&self, email: String) -> Result<DBMessageList, Error> {
+    async fn get_messages(&self, email: String) -> Result<ResolvedMessageList, Error> {
         let is_valid_email = is_valid_email(&email);
 
         if is_valid_email {
@@ -64,7 +62,7 @@ impl GraphQLQueryRoot {
                                 }
                             }
 
-                            return Ok(DBMessageList { messages, email });
+                            return Ok(ResolvedMessageList { messages, email });
                         }
                         Err(_) => {
                             // Return an error response

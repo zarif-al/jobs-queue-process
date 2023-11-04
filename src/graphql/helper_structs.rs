@@ -6,3 +6,9 @@ pub struct GeneralResponse {
     pub message: Option<String>,
     pub error: Option<String>,
 }
+
+#[derive(SimpleObject)]
+pub struct ResolvedMessageList {
+    pub email: String,
+    pub messages: Vec<String>,
+}
