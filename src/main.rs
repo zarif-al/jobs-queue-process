@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber;
 
-use db::mongo_entities::DBMessage;
+use db::mongo_message::DBMessage;
 use threads::{process_jobs, queue_jobs};
 
 async fn graphiql() -> impl IntoResponse {

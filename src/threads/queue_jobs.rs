@@ -4,7 +4,7 @@ use redis_work_queue::{Item, WorkQueue};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info};
 
-use crate::db::{mongo_entities::DBMessage, redis_conn};
+use crate::db::{mongo_message::DBMessage, redis_conn};
 
 /*
  This thread will receive jobs from the `/` route handler and

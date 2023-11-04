@@ -3,7 +3,7 @@ use serde_email::is_valid_email;
 use tokio::sync::mpsc::Sender;
 use tracing::error;
 
-use crate::db::mongo_entities::DBMessage;
+use crate::db::mongo_message::DBMessage;
 
 use crate::graphql::helper_structs::GeneralResponse;
 

@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use redis_work_queue::WorkQueue;
 use tracing::{error, info, warn};
 
-use crate::db::{mongo_entities::DBMessage, mongo_message, redis_conn};
+use crate::db::{mongo_message, mongo_message::DBMessage, redis_conn};
 
 pub async fn process_jobs(name: String, work_queue: Arc<WorkQueue>) {
     let redis_conn = redis_conn().await;
