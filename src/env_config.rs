@@ -1,3 +1,7 @@
+/*
+This module will read and return the enviroment
+variables from a `.env` file.
+*/
 use std::env;
 
 use dotenv::dotenv;

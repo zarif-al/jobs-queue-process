@@ -1,21 +1,24 @@
-use axum::{http::StatusCode, Json};
 use mongodb::bson::doc;
 use tracing::error;
 
-use crate::{
-    db_connect,
-    req_res_structs::{
-        GeneralResponse, MessagesRequestPayload, MessagesResponse, MessagesResponseEnum,
-        PostJobRequestPayload,
-    },
-};
+use crate::db::{mongo_conn, mongo_message::DBMessage};
 
-pub async fn handle(payload: MessagesRequestPayload) -> (StatusCode, Json<MessagesResponseEnum>) {
-    let mongo_conn = db_connect::mongo_conn::<PostJobRequestPayload>().await;
+/*
+This function will accept an EMAIL and fetch all the DBMessage objects
+stored in mongo db that contain the provided EMAIL. It will push the messages
+in an STRING vector.
+
+It return an Option<Vec<String>>.
+
+If its successfull in getting data from the db it will returns
+a Vec<String> else it returns None
+*/
+pub async fn get_messages(email: &String) -> Option<Vec<String>> {
+    let mongo_conn = mongo_conn::<DBMessage>().await;
 
     match mongo_conn {
         Some(collection) => {
-            let mongo_query_filter = doc! { "email" : payload.email.to_string() };
+            let mongo_query_filter = doc! { "email" : &email };
 
             // collection.find() returns a cursor that streams the results as it gets iterated
             let mongo_result_cursor = collection.find(mongo_query_filter, None).await;
@@ -59,47 +62,23 @@ pub async fn handle(payload: MessagesRequestPayload) -> (StatusCode, Json<Messag
                         }
                     }
 
-                    if messages.len() > 0 {
-                        // Return all messages
-                        return (
-                            StatusCode::OK,
-                            Json(MessagesResponseEnum::MessagesResponse(MessagesResponse {
-                                email: payload.email,
-                                messages,
-                            })),
-                        );
-                    } else {
-                        // Return a general response
-                        return (
-                            StatusCode::OK,
-                            Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
-                                message: Some("No messages found for this email".to_string()),
-                                error: None,
-                            })),
-                        );
-                    }
+                    return Some(messages);
                 }
-                Err(_) => {
-                    // Return an error response
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
-                            error: Some(format!("Failed to query data from mongo.")),
-                            message: None,
-                        })),
+                Err(err) => {
+                    error!(
+                        "Failed to get message list for email: {}. Error: {}",
+                        &email, err
                     );
+                    None
                 }
             }
         }
         None => {
-            // Return an error response
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(MessagesResponseEnum::GeneralResponse(GeneralResponse {
-                    error: Some(format!("Failed to get mongo connection")),
-                    message: None,
-                })),
+            error!(
+                "Failed to get message list for {}. Error: Failed to get mongodb connection.",
+                &email
             );
+            None
         }
     }
 }

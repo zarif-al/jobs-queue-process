@@ -1,31 +1,39 @@
-mod client;
-mod db_connect;
+mod db;
 mod env_config;
-mod messages_route;
-mod post_job_route;
-mod processor;
-mod req_res_structs;
+mod graphql;
+mod threads;
 
+use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
+use async_graphql_axum::GraphQL;
 use axum::{
-    extract::{Json, Query},
-    routing::{get, post},
+    response::{Html, IntoResponse},
+    routing::get,
     Router,
 };
+use graphql::{GraphQLMutationRoot, GraphQLQueryRoot};
 use redis_work_queue::{KeyPrefix, WorkQueue};
-use req_res_structs::{MessagesRequestPayload, PostJobRequestPayload};
-use serde::Serialize;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber;
 
-#[derive(Serialize)]
-pub struct Response {
-    message: String,
+use db::mongo_message::DBMessage;
+use threads::{process_jobs, queue_jobs};
+
+async fn graphiql() -> impl IntoResponse {
+    Html(GraphiQLSource::build().endpoint("/").finish())
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
+    // transmitters and receivers to pass job to queue thread
+    let (tx, rx) = mpsc::channel::<DBMessage>(32);
+
+    // instantiate grapqhl schema
+    let schema = Schema::build(GraphQLQueryRoot, GraphQLMutationRoot, EmptySubscription)
+        .data(tx)
+        .finish();
+
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt::init();
 
@@ -35,34 +43,19 @@ async fn main() {
     // create work queue
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
 
-    // transmitters and receivers to pass job to queue thread
-    let (tx, rx) = mpsc::channel::<PostJobRequestPayload>(32);
-
     // build our application
-    let app = Router::new()
-        .route(
-            "/post-job",
-            post(move |Json(payload): Json<PostJobRequestPayload>| {
-                post_job_route::handle(tx, payload)
-            }),
-        )
-        .route(
-            "/messages",
-            get(move |Query(payload): Query<MessagesRequestPayload>| {
-                messages_route::handle(payload)
-            }),
-        );
+    let app = Router::new().route("/", get(graphiql).post_service(GraphQL::new(schema)));
 
     // thread to listen and add jobs to queue
-    tokio::spawn(post_job_route::queue_thread(
-        String::from("Route: '/' Thread"),
+    tokio::spawn(queue_jobs(
+        String::from("Queue Jobs Thread"),
         rx,
         Arc::clone(&work_queue),
     ));
 
     // thread to process jobs
-    tokio::spawn(post_job_route::process_thread(
-        String::from("Process Thread 1"),
+    tokio::spawn(process_jobs(
+        String::from("Process Jobs Thread: 1"),
         Arc::clone(&work_queue),
     ));
 

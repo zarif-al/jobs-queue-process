@@ -1,6 +1,4 @@
-use serde_email::Email;
-
-use crate::{db_connect::mongo_conn, req_res_structs::PostJobRequestPayload};
+use crate::db::{mongo_conn, mongo_message::DBMessage};
 use tracing::error;
 
 /**
@@ -10,16 +8,13 @@ use tracing::error;
  *
  * If data is successfully inserted into the db then this function
  * will return a unit type or None.
- *
  */
-pub async fn db_insert(message: String, email: Email) -> Option<()> {
-    let mongo_conn = mongo_conn().await;
+pub async fn insert(message: String, email: String) -> Option<()> {
+    let mongo_conn = mongo_conn::<DBMessage>().await;
 
     match mongo_conn {
         Some(conn) => {
-            let data_insert = conn
-                .insert_one(PostJobRequestPayload { email, message }, None)
-                .await;
+            let data_insert = conn.insert_one(DBMessage { email, message }, None).await;
 
             match data_insert {
                 Ok(_) => Some(()),
