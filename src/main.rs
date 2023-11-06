@@ -21,7 +21,12 @@ use db::mongo_message::DBMessage;
 use threads::{process_jobs, queue_jobs};
 
 async fn graphiql() -> impl IntoResponse {
-    Html(GraphiQLSource::build().endpoint("/").finish())
+    Html(
+        GraphiQLSource::build()
+            .endpoint("/")
+            .title("Zarif: Rust Queue Processing")
+            .finish(),
+    )
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
