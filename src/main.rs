@@ -1,6 +1,7 @@
 mod db;
 mod env_config;
 mod graphql;
+mod mail;
 mod threads;
 
 use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
