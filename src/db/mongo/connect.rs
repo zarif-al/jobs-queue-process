@@ -1,9 +1,6 @@
 /*
 This module contains code to connect with mongo db.
 */
-/*
- TODO: We should look into having connection pools.
-*/
 
 use mongodb::{options::ClientOptions, Client, Collection};
 use tracing::info;
@@ -39,7 +36,9 @@ pub async fn mongo_conn<T>() -> Option<Collection<T>> {
                 options.app_name = Some("Jobs Queue Process".to_string());
 
                 let client = Client::with_options(options);
-
+                /*
+                 * This client handles connection pools internally
+                 */
                 match client {
                     Ok(client) => {
                         let db = client.database(&env_config.mongo_db_name);
