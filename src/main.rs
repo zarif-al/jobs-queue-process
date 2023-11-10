@@ -13,10 +13,9 @@ use axum::{
 };
 use graphql::{GraphQLMutationRoot, GraphQLQueryRoot};
 use redis_work_queue::{KeyPrefix, WorkQueue};
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::info;
-use tracing_subscriber;
 
 use db::mongo_message::DBMessage;
 use threads::{process_jobs, queue_jobs};
@@ -29,9 +28,10 @@ async fn graphiql() -> impl IntoResponse {
             .finish(),
     )
 }
-
-#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
-async fn main() {
+#[shuttle_runtime::main(flavor = "multi_thread", worker_threads = 4)]
+async fn axum(
+    #[shuttle_secrets::Secrets] secrets_store: shuttle_secrets::SecretStore,
+) -> shuttle_axum::ShuttleAxum {
     // transmitters and receivers to pass job to queue thread
     let (tx, rx) = mpsc::channel::<DBMessage>(32);
 
@@ -40,17 +40,13 @@ async fn main() {
         .data(tx)
         .finish();
 
-    // install global collector configured based on RUST_LOG env var.
-    tracing_subscriber::fmt::init();
+    env_config::set_env(secrets_store);
 
     // get env config
     let env_config = env_config::get_env_config();
 
     // create work queue
     let work_queue = Arc::new(WorkQueue::new(KeyPrefix::from(env_config.redis_work_queue)));
-
-    // build our application
-    let app = Router::new().route("/", get(graphiql).post_service(GraphQL::new(schema)));
 
     // thread to listen and add jobs to queue
     tokio::spawn(queue_jobs(
@@ -65,13 +61,19 @@ async fn main() {
         Arc::clone(&work_queue),
     ));
 
+    info!("App listening is ready and listening");
+
+    // build our application
+    let router = Router::new().route("/", get(graphiql).post_service(GraphQL::new(schema)));
+
+    Ok(router.into())
+
     // setup server address
-    let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
-    info!("App listening on {}", addr);
+    // let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
 
     // serve it with hyper on designated port
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .expect("App failed to startup!");
+    // axum::Server::bind(&addr)
+    //     .serve(app.into_make_service())
+    //     .await
+    //     .expect("App failed to startup!");
 }
