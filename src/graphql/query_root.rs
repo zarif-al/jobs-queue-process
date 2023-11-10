@@ -34,7 +34,6 @@ impl GraphQLQueryRoot {
             })
         }
     }
-    // TODO : Implement this
     async fn email_messages(&self, email: String) -> Result<GeneralResponse, Error> {
         let is_valid_email = is_valid_email(&email);
 
