@@ -24,7 +24,7 @@ async fn graphiql() -> impl IntoResponse {
     Html(
         GraphiQLSource::build()
             .endpoint("/")
-            .title("Zarif: Rust Queue Processing")
+            .title("Zarif: Rust Queue App")
             .finish(),
     )
 }
