@@ -12,6 +12,8 @@ pub struct EnvConfig {
     pub port: u16,
     pub mongo_uri: String,
     pub mongo_db_name: String,
+    pub gmail_email: String,
+    pub gmail_app_password: String,
 }
 
 /*
@@ -35,6 +37,10 @@ pub fn get_env_config() -> EnvConfig {
     let mongo_db_name =
         env::var("MONGO_DB_NAME").expect("MONGO_DB_NAME is not defined in the .env");
 
+    let gmail_email = env::var("GMAIL_EMAIL").expect("GMAIL_EMAIL is not defined in .env");
+    let gmail_app_password =
+        env::var("GMAIL_APP_PASSWORD").expect("GMAIL_APP_PASSWORD is not defined in .env");
+
     EnvConfig {
         port: port
             .parse::<u16>()
@@ -43,5 +49,7 @@ pub fn get_env_config() -> EnvConfig {
         redis_work_queue,
         mongo_uri,
         mongo_db_name,
+        gmail_email,
+        gmail_app_password,
     }
 }
