@@ -18,7 +18,6 @@ pub struct EnvConfig {
 
 /*
  This function will return a struct containing all env configs.
- TODO: Can/should we cache the response of this function?
 */
 pub fn get_env_config() -> EnvConfig {
     dotenv().ok();
