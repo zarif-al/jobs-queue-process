@@ -2,29 +2,54 @@
 
 Live url: [Zarif: Rust Queue App](https://jobs-queue-project.shuttleapp.rs/)
 
-This is a multi-threaded rust app that I created to explore Rust and its developer experience.
+This is a multi-threaded rust app that I created to explore Rust and its developer experience. The main thread runs the api service and listens for requests.
 
-This is a GraphQL API api wit the following queries and mutations:
-```gql
-# Queries
+There are two more separate threads running two functions.
 
-# Returns the list of messages stored agains this email from Mongo DB
-get_messages(email: String)
+The first thread receives messages from the handler for `new_message` (running on the main thread). Then it creates a job and adds it to the Redis queue.
 
-# Sends an emails with the list of messages stored against this email from Mongo DB
-email_messages(email: String)
+The second thread gets jobs from the redis queue and process them by saving them to a Mongo DB. This function runs in a loop and keeps trying to get jobs from the redis queue.
 
-# Mutations
+## Usage Examples
 
-# Creates a job to save the provided message against the provided email
-new_message(email: String, message: String)
+### Mutation
+
+#### Save a new message
+```graphql
+# You can modify the value for 'email' and 'message' to your own
+# email and message
+mutation NewMessage{
+  newMessage(email: "zarif_al96@outlook.com", message: "Hi Mom!"){
+    error,
+    message
+  }
+}
 ```
 
-There are two separate threads running two functions.
+### Queries
 
-The first thread receives messages from the handler for `new_message` query. Then it creates a job and adds it to Redis queue.
+#### View messages saved against your email
+```graphql
+# You can modify the value for 'email'
+query GetMessages{
+  getMessages(email: "zarif_al96@outlook.com"){
+    email,
+    messages
+  }
+}
+```
 
-The second thread gets jobs from the redis queue and process them by saving them to a Mongo DB.
+#### Have messages saved against your email address emailed to you
+```graphql
+# You can modify the value for 'email'
+query EmailMessage{
+  emailMessages(email:"zarif_al96@outlook.com"){
+    error,
+    message
+  }
+}
+```
+
 
 
 ## Technology
