@@ -67,13 +67,4 @@ async fn axum(
     let router = Router::new().route("/", get(graphiql).post_service(GraphQL::new(schema)));
 
     Ok(router.into())
-
-    // setup server address
-    // let addr = SocketAddr::from(([127, 0, 0, 1], env_config.port));
-
-    // serve it with hyper on designated port
-    // axum::Server::bind(&addr)
-    //     .serve(app.into_make_service())
-    //     .await
-    //     .expect("App failed to startup!");
 }
