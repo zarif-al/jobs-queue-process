@@ -1,7 +1,5 @@
 # Jobs Queue Process
 
-Live url: [Zarif: Rust Queue App](https://jobs-queue-project.shuttleapp.rs/)
-
 This is a multi-threaded rust app that I created to explore Rust and its developer experience. The main thread runs the api service and listens for requests.
 
 There are two more separate threads running two functions.
